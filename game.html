@@ -88,6 +88,14 @@ const C = {
 };
 
 const TERMINAL_VELOCITY = 20;
+const SHOW_HITBOXES = false; // Debug flag to visualize collision boxes
+
+// Obstacle Type Definitions
+const OBSTACLE_TYPES = {
+    tree: { w: 30, h: 25 },
+    rock: { w: 30, h: 20 },
+    ramp: { w: 60, h: 20 }
+};
 
 // Game State
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
@@ -153,8 +161,8 @@ function init() {
     player = {
         x: canvas.width / 2, // Screen position (stays centered)
         y: 100,
-        w: 30,
-        h: 40,
+        w: 40,
+        h: 15, // Hitbox is small here because we only care if feet/board hit
         worldX: 0, // Position in world space
         angle: 0, // Direction angle (-1 to 1, 0 is straight down)
         dx: 0, // Horizontal velocity in world space
@@ -234,7 +242,6 @@ function update(deltaTime) {
     if (Math.random() < 0.03 + (gameSpeed/200)) {
         const rand = Math.random();
         const type = rand < 0.5 ? 'tree' : rand < 0.75 ? 'rock' : 'ramp';
-        const size = type === 'tree' ? 40 : 25;
 
         // Spawn in world coordinates around the visible area
         const worldXPos = player.worldX + (Math.random() - 0.5) * canvas.width * 1.5;
@@ -243,8 +250,6 @@ function update(deltaTime) {
             type: type,
             worldX: worldXPos, // Store world X coordinate
             y: canvas.height + 50,
-            w: size,
-            h: size,
             active: true
         });
     }
@@ -257,8 +262,9 @@ function update(deltaTime) {
         // Collision (in world space)
         if (o.active && player.invul === 0 && player.z === 0) {
             // Simple box collision using world coordinates
+            const obstacleDef = OBSTACLE_TYPES[o.type];
             const playerBox = {x: player.worldX, y: player.y, w: player.w, h: player.h};
-            const obstacleBox = {x: o.worldX, y: o.y, w: o.w, h: o.h};
+            const obstacleBox = {x: o.worldX, y: o.y, w: obstacleDef.w, h: obstacleDef.h};
 
             if (checkCollision(playerBox, obstacleBox)) {
                 if (o.type === 'ramp') {
@@ -386,12 +392,20 @@ function draw() {
     obstacles.forEach(o => {
         // Convert world X to screen X using camera offset
         let screenX = o.worldX - cameraX + canvas.width / 2;
+        const obstacleDef = OBSTACLE_TYPES[o.type];
 
         // Only draw if visible on screen
-        if (screenX > -o.w && screenX < canvas.width + o.w) {
+        if (screenX > -obstacleDef.w && screenX < canvas.width + obstacleDef.w) {
             if (o.type === 'tree') drawTree(screenX, o.y);
             else if(o.type === 'rock') drawRock(screenX, o.y);
             else if(o.type === 'ramp') drawRamp(screenX, o.y);
+
+            // Draw hitbox
+            if (SHOW_HITBOXES) {
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(screenX, o.y, obstacleDef.w, obstacleDef.h);
+            }
         }
     });
 
@@ -413,6 +427,14 @@ function draw() {
         // Blink if invulnerable
         if (Math.floor(player.invul / 4) % 2 === 0) {
             drawPlayer(player);
+
+            // Draw player hitbox (in screen space)
+            if (SHOW_HITBOXES) {
+                const screenX = player.worldX - cameraX + canvas.width / 2;
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(screenX, player.y, player.w, player.h);
+            }
         }
     }
 
@@ -425,9 +447,11 @@ function drawPlayer(player) {
     const {x, y, z, hp, angle} = player;
     ctx.save();
     ctx.translate(x, y);
+    // Shift all drawing to align drawing with player hitbox coords
+    ctx.translate(20, -10);
 
     // Tilt based on direction angle
-    ctx.rotate(angle * 0.3);
+    ctx.rotate(angle * 0.3);    
 
     // Draw Snowboard
     ctx.fillStyle = C.red;
@@ -497,10 +521,10 @@ function drawPlayer(player) {
 function drawRamp(x, y) {
     ctx.fillStyle = C.blue;
     ctx.beginPath();
-    ctx.moveTo(x - 25, y);
-    ctx.lineTo(x + 15, y);
-    ctx.lineTo(x + 25, y + 20);
-    ctx.lineTo(x - 35, y + 20);
+    ctx.moveTo(x + 10, y);
+    ctx.lineTo(x + 50, y);
+    ctx.lineTo(x + 60, y + 20);
+    ctx.lineTo(x, y + 20);
     ctx.closePath();
     ctx.fill();
 }
@@ -508,14 +532,14 @@ function drawRamp(x, y) {
 function drawTree(x, y) {
     ctx.fillStyle = C.green;
     ctx.beginPath();
-    ctx.moveTo(x + 20, y); // Top
-    ctx.lineTo(x + 40, y + 40); // Bot Right
-    ctx.lineTo(x, y + 40); // Bot Left
+    ctx.moveTo(x + 15, y - 20); // Top
+    ctx.lineTo(x + 35, y + 20); // Bot Right
+    ctx.lineTo(x - 5, y + 20); // Bot Left
     ctx.fill();
     
     // Trunk
     ctx.fillStyle = C.brown;
-    ctx.fillRect(x + 15, y + 40, 10, 10);
+    ctx.fillRect(x + 10, y + 20, 10, 10);
 }
 
 function drawRock(x, y) {
