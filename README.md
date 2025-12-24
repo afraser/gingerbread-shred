@@ -1,6 +1,7 @@
 # TODO
 
-- [ ] Testing: draw hitboxes and improve collision detection. Abstract to a function that takes 2 bounding boxes and returns a boolean. We can use this for hit detection as well as for spawning.
+- [x] Abstract hit detection to a function that takes 2 bounding boxes and returns a boolean. We can use this for hit detection as well as for spawning.
+- [ ] Testing: draw hitboxes and improve collision detection.
 - [ ] Spawning: Rocks and trees should not be spawned on top of ramps.
 - [ ] Spawning: Make spawning a function of available space, not time.
 - [ ] Stop game timer on pause.

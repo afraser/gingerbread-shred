@@ -5,22 +5,23 @@
     <style>
         body {
             background-color: #222;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 0;
             color: white;
             font-family: 'Courier New', Courier, monospace;
             overflow: hidden;
+            width: 100vw;
+            height: 100vh;
         }
         #gameContainer {
             position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            border: 4px solid #fff1e8;
+            width: 100%;
+            height: 100%;
         }
         canvas {
             display: block;
+            width: 100%;
+            height: 100%;
             background-color: #c2c3c7; /* Snow Color */
             image-rendering: pixelated; /* Sharp pixels */
         }
@@ -53,7 +54,7 @@
 <body>
 
 <div id="gameContainer">
-    <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div id="ui">SCORE: 0</div>
     <div id="startScreen">
         <h1>GINGERBREAD SHRED</h1>
@@ -81,10 +82,12 @@ const C = {
     brown: "#ab5236", // Gingerbread
     green: "#008751", // Tree
     grey: "#5f574f",  // Rock
-    red: "#ff004d",   // Buttons/Blood
+    red: "#ff004d",   // Buttons
     blue: "#29adff",  // Sky/Ice
     light_grey: "#c2c3c7"
 };
+
+const TERMINAL_VELOCITY = 20;
 
 // Game State
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
@@ -101,6 +104,36 @@ let player = {};
 let obstacles = [];
 let particles = [];
 let snow = [];
+
+// --- CANVAS SETUP ---
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Reinitialize player position if game is running
+    if (gameState === 'PLAYING' && player.x) {
+        player.x = canvas.width / 2;
+    }
+}
+
+// Initialize canvas size
+resizeCanvas();
+
+// --- COLLISION DETECTION ---
+
+/**
+ * Check if two bounding boxes overlap.
+ * @param {Object} box1 - First bounding box with {x, y, w, h}
+ * @param {Object} box2 - Second bounding box with {x, y, w, h}
+ * @returns {boolean} - True if boxes overlap, false otherwise
+ */
+function checkCollision(box1, box2) {
+    return box1.x < box2.x + box2.w &&
+           box1.x + box1.w > box2.x &&
+           box1.y < box2.y + box2.h &&
+           box1.y + box1.h > box2.y;
+}
 
 // --- INITIALIZATION ---
 
@@ -169,6 +202,9 @@ function update(deltaTime) {
     if (keys.down) gameSpeed = Math.max(5, gameSpeed + 0.05 * deltaTime * 60);
     if (keys.up) gameSpeed = Math.max(0, gameSpeed - 0.05 * deltaTime * 60);
 
+    // Cap max speed
+    gameSpeed = Math.min(TERMINAL_VELOCITY, gameSpeed);
+
     player.angle *= 0.99; // Angle decay
     player.angle = Math.max(-2, Math.min(2, player.angle)); // Clamp angle
     player.dx = player.angle * gameSpeed * 1.5;
@@ -221,11 +257,10 @@ function update(deltaTime) {
         // Collision (in world space)
         if (o.active && player.invul === 0 && player.z === 0) {
             // Simple box collision using world coordinates
-            if (player.worldX < o.worldX + o.w &&
-                player.worldX + player.w > o.worldX &&
-                player.y < o.y + o.h &&
-                player.y + player.h > o.y) {
+            const playerBox = {x: player.worldX, y: player.y, w: player.w, h: player.h};
+            const obstacleBox = {x: o.worldX, y: o.y, w: o.w, h: o.h};
 
+            if (checkCollision(playerBox, obstacleBox)) {
                 if (o.type === 'ramp') {
                     player.dz = gameSpeed * 1.5; // Jump boost
                 } else {
@@ -264,8 +299,8 @@ function update(deltaTime) {
 
 /** Handle player getting hit by an obstacle. */
 function hitPlayer() {
-    player.hp--;
-    player.invul = 120; // 1 second invulnerability
+    // player.hp--;
+    // player.invul = 120; // 1 second invulnerability
     shakeAmt = 15;
     
     // Spawn limb particles
@@ -551,6 +586,10 @@ window.addEventListener('keyup', e => {
     if (e.code === 'ArrowRight') keys.right = false;
     if (e.code === 'ArrowDown') keys.down = false;
     if (e.code === 'ArrowUp') keys.up = false;
+});
+
+window.addEventListener('resize', () => {
+    resizeCanvas();
 });
 
 </script>
