@@ -197,11 +197,11 @@ function update(deltaTime) {
     // Chance to spawn increases slightly with speed
     if (Math.random() < 0.03 + (gameSpeed/200)) {
         const rand = Math.random();
-        let type = rand < 0.5 ? 'tree' : rand < 0.75 ? 'rock' : 'ramp';
-        let size = type === 'tree' ? 40 : 25;
+        const type = rand < 0.5 ? 'tree' : rand < 0.75 ? 'rock' : 'ramp';
+        const size = type === 'tree' ? 40 : 25;
 
         // Spawn in world coordinates around the visible area
-        let worldXPos = player.worldX + (Math.random() - 0.5) * canvas.width * 1.5;
+        const worldXPos = player.worldX + (Math.random() - 0.5) * canvas.width * 1.5;
 
         obstacles.push({
             type: type,
