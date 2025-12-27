@@ -60,10 +60,10 @@
     <div id="ui">SCORE: 0</div>
     <div id="startScreen">
         <h1>GINGERBREAD SHRED</h1>
-        <p>Use LEFT / RIGHT Arrows to Turn</p>
-        <p>Don't lose your head!</p>
+        <p>Arrows or Drag to Steer & Speed</p>
+        <p>Double-Tap to Pause</p>
         <br>
-        <p class="blink">PRESS SPACE TO START</p>
+        <p class="blink">TAP OR PRESS SPACE TO START</p>
     </div>
 </div>
 
@@ -115,7 +115,9 @@ let touch = {
     startX: 0,
     startY: 0,
     currentX: 0,
-    currentY: 0
+    currentY: 0,
+    lastTapTime: 0,
+    tapCount: 0
 };
 
 // Entities
@@ -138,6 +140,34 @@ function resizeCanvas() {
 
 // Initialize canvas size
 resizeCanvas();
+
+// Detect touch support
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// Update start screen based on device type
+function updateStartScreenInstructions() {
+    if (isTouchDevice) {
+        startScreen.innerHTML = `
+            <h1>GINGERBREAD SHRED</h1>
+            <p>Drag to Steer & Control Speed</p>
+            <p>Double-Tap to Pause</p>
+            <br>
+            <p class="blink">TAP TO START</p>
+        `;
+    } else {
+        startScreen.innerHTML = `
+            <h1>GINGERBREAD SHRED</h1>
+            <p>Arrow Keys to Steer</p>
+            <p>Up/Down to Control Speed</p>
+            <p>ESC to Pause</p>
+            <br>
+            <p class="blink">PRESS SPACE TO START</p>
+        `;
+    }
+}
+
+// Set initial instructions
+updateStartScreenInstructions();
 
 // --- COLLISION DETECTION ---
 
@@ -429,11 +459,12 @@ function crumble() {
 /** Handle Game Over state. */
 function gameOver() {
     gameState = 'GAMEOVER';
+    const restartText = isTouchDevice ? 'TAP TO RESTART' : 'PRESS SPACE TO RESTART';
     startScreen.innerHTML = `
         <h1>CRUMBLED!</h1>
         <p>Score: ${Math.floor(score/10)}</p>
         <br>
-        <p class="blink">PRESS SPACE TO RESTART</p>
+        <p class="blink">${restartText}</p>
     `;
     startScreen.style.display = 'flex';
 }
@@ -602,6 +633,12 @@ function drawPlayer(player) {
     // Tilt based on direction angle
     ctx.rotate(angle * 0.3);    
 
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(0, 25 + z, 20, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
     // Draw Snowboard
     ctx.fillStyle = C.red;
     ctx.beginPath();
@@ -610,12 +647,6 @@ function drawPlayer(player) {
     ctx.strokeStyle = C.black;
     ctx.lineWidth = 2;
     ctx.stroke();
-
-    // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath();
-    ctx.ellipse(0, 25 + z, 20, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
 
     if (hp > 0) {
         // HEAD (Always draw unless dead)
@@ -754,10 +785,11 @@ window.addEventListener('keydown', e => {
     if (e.code === 'Escape') {
         if (gameState === 'PLAYING') {
             gameState = 'PAUSED';
+            const resumeText = isTouchDevice ? 'TAP TO RESUME' : 'PRESS SPACE TO RESUME';
             startScreen.innerHTML = `
                 <h1>PAUSED</h1>
                 <br>
-                <p class="blink">PRESS SPACE TO RESUME</p>
+                <p class="blink">${resumeText}</p>
             `;
             startScreen.style.display = 'flex';
         }
@@ -799,9 +831,37 @@ window.addEventListener('touchstart', e => {
     touch.currentX = touchX;
     touch.currentY = touchY;
 
-    // Handle menu interactions
-    if (gameState === 'MENU' || gameState === 'GAMEOVER' || gameState === 'PAUSED') {
-        init();
+    // Detect double-tap for pause (during gameplay only)
+    const currentTime = Date.now();
+    const tapGap = currentTime - touch.lastTapTime;
+
+    if (tapGap < 300 && tapGap > 0) {
+        // Double tap detected
+        if (gameState === 'PLAYING') {
+            gameState = 'PAUSED';
+            const resumeText = isTouchDevice ? 'TAP TO RESUME' : 'PRESS SPACE TO RESUME';
+            startScreen.innerHTML = `
+                <h1>PAUSED</h1>
+                <br>
+                <p class="blink">${resumeText}</p>
+            `;
+            startScreen.style.display = 'flex';
+        }
+        touch.tapCount = 0;
+        touch.lastTapTime = 0;
+    } else {
+        // Single tap
+        touch.lastTapTime = currentTime;
+        touch.tapCount = 1;
+
+        // Handle menu interactions with single tap
+        if (gameState === 'MENU' || gameState === 'GAMEOVER') {
+            init();
+        } else if (gameState === 'PAUSED') {
+            gameState = 'PLAYING';
+            startScreen.style.display = 'none';
+            loop();
+        }
     }
 }, { passive: false });
 
