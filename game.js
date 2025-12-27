@@ -37,7 +37,7 @@ let shakeAmt = 0;
 let cameraX = 0; // Camera position in world space
 
 // Inputs
-const keys = { left: false, right: false };
+const keys = { left: false, right: false, up: false, down: false };
 
 // Touch input state
 let touch = {
@@ -46,8 +46,7 @@ let touch = {
     startY: 0,
     currentX: 0,
     currentY: 0,
-    lastTapTime: 0,
-    tapCount: 0
+    lastTapTime: 0
 };
 
 // Entities
@@ -810,12 +809,10 @@ window.addEventListener('touchstart', e => {
             gameState = 'PAUSED';
             setPauseScreen();
         }
-        touch.tapCount = 0;
         touch.lastTapTime = 0;
     } else {
         // Single tap
         touch.lastTapTime = currentTime;
-        touch.tapCount = 1;
 
         // Handle menu interactions with single tap
         if (gameState === 'MENU' || gameState === 'GAMEOVER') {
