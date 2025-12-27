@@ -225,9 +225,9 @@ function init() {
 function update(deltaTime) {
   if (gameState !== "PLAYING") return;
 
-  // Scale game speed and other time-dependent logic by deltaTime
-  score += deltaTime * 100; // Adjust score increment
-  uiScore.innerText = "SCORE: " + Math.floor(score / 10);
+  // Score based on distance traveled downhill
+  score += gameSpeed * deltaTime * 10; // Distance-based scoring
+  uiScore.innerText = "SCORE: " + Math.floor(score);
 
   if (Math.floor(score) % 500 === 0) gameSpeed += 0.5 * deltaTime;
 
@@ -382,6 +382,7 @@ function update(deltaTime) {
       if (checkCollision(playerBox, obstacleBox)) {
         if (o.type === "ramp") {
           player.dz = gameSpeed * 1.5; // Jump boost
+          score += 100 * gameSpeed; // Jump score bonus
         } else {
           hitPlayer();
         }
@@ -471,7 +472,7 @@ function gameOver() {
   gameState = "GAMEOVER";
   startScreen.innerHTML = `
         <h1>CRUMBLED!</h1>
-        <p>Score: ${Math.floor(score / 10)}</p>
+        <p>Score: ${Math.floor(score)}</p>
         <br>
         <p class="blink">${getRestartText()}</p>
     `;
