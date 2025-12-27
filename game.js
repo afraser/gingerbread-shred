@@ -500,7 +500,7 @@ function draw() {
     // Only draw if visible on screen
     if (screenX > -obstacleDef.w && screenX < canvas.width + obstacleDef.w) {
       if (o.type === "tree") drawTree(screenX, o.y, o.variant);
-      else if (o.type === "rock") drawRock(screenX, o.y);
+      else if (o.type === "rock") drawRock(screenX, o.y, o.variant);
       else if (o.type === "ramp") drawRamp(screenX, o.y);
 
       // Draw hitbox
@@ -767,26 +767,48 @@ function drawTree(x, y, variant = 1) {
   ctx.fillRect(x + 10, y + 20, 10, 10);
 }
 
-function drawRock(x, y) {
+function drawRock(x, y, variant = 1) {
   // Shadow
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.beginPath();
   ctx.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Rock
   ctx.fillStyle = C.grey;
   ctx.beginPath();
-  // Irregular rocky polygon - 30px wide, 20px tall, flat bottom
-  ctx.moveTo(x, y + 20); // Bottom left (flat)
-  ctx.lineTo(x + 3, y + 10); // Left side jagged
-  ctx.lineTo(x + 7, y + 5); // Upper left
-  ctx.lineTo(x + 12, y + 2); // Peak left
-  ctx.lineTo(x + 18, y); // Highest peak
-  ctx.lineTo(x + 23, y + 4); // Peak right
-  ctx.lineTo(x + 27, y + 8); // Upper right
-  ctx.lineTo(x + 30, y + 14); // Right side jagged
-  ctx.lineTo(x + 30, y + 20); // Bottom right (flat)
+
+  if (variant === 1) {
+    // Variant 1: Off-center hump - peak shifted left
+    ctx.moveTo(x, y + 20); // Bottom left
+    ctx.lineTo(x + 3, y + 12); // Left side gentle
+    ctx.lineTo(x + 8, y + 7); // Upper left
+    ctx.lineTo(x + 12, y + 5); // Peak (left of center)
+    ctx.lineTo(x + 15, y + 8); // Slope down
+    ctx.lineTo(x + 22, y + 14); // Right side gentle
+    ctx.lineTo(x + 28, y + 16); // Lower right
+    ctx.lineTo(x + 30, y + 20); // Bottom right
+  } else if (variant === 2) {
+    // Variant 2: Classic jagged rock
+    ctx.moveTo(x, y + 20); // Bottom left (flat)
+    ctx.lineTo(x + 3, y + 10); // Left side jagged
+    ctx.lineTo(x + 7, y + 5); // Upper left
+    ctx.lineTo(x + 12, y + 2); // Peak left
+    ctx.lineTo(x + 18, y); // Highest peak
+    ctx.lineTo(x + 23, y + 4); // Peak right
+    ctx.lineTo(x + 27, y + 8); // Upper right
+    ctx.lineTo(x + 30, y + 14); // Right side jagged
+    ctx.lineTo(x + 30, y + 20); // Bottom right (flat)
+  } else {
+    // Variant 3: Wide flat rock - horizontal emphasis
+    ctx.moveTo(x - 5, y + 20); // Bottom left (wider)
+    ctx.lineTo(x, y + 12); // Left side
+    ctx.lineTo(x + 5, y + 8); // Upper left
+    ctx.lineTo(x + 15, y + 5); // Low peak
+    ctx.lineTo(x + 25, y + 8); // Upper right
+    ctx.lineTo(x + 30, y + 12); // Right side
+    ctx.lineTo(x + 35, y + 20); // Bottom right (wider)
+  }
+
   ctx.closePath();
   ctx.fill();
 }
