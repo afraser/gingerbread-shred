@@ -290,12 +290,43 @@ function update(deltaTime) {
         // Spawn in world coordinates around the visible area
         const worldXPos = player.worldX + (Math.random() - 0.5) * canvas.width * 1.5;
 
-        obstacles.push({
+        // Create new obstacle
+        const newObstacle = {
             type: type,
-            worldX: worldXPos, // Store world X coordinate
+            worldX: worldXPos,
             y: canvas.height + 50,
             active: true
-        });
+        };
+
+        // Check if new obstacle collides with existing obstacles
+        const newObstacleDef = OBSTACLE_TYPES[newObstacle.type];
+        const newBox = {
+            x: newObstacle.worldX,
+            y: newObstacle.y,
+            w: newObstacleDef.w,
+            h: newObstacleDef.h
+        };
+
+        let canSpawn = true;
+        for (let existing of obstacles) {
+            const existingDef = OBSTACLE_TYPES[existing.type];
+            const existingBox = {
+                x: existing.worldX,
+                y: existing.y,
+                w: existingDef.w,
+                h: existingDef.h
+            };
+
+            if (checkCollision(newBox, existingBox)) {
+                canSpawn = false;
+                break;
+            }
+        }
+
+        // Only add obstacle if it doesn't overlap with existing ones
+        if (canSpawn) {
+            obstacles.push(newObstacle);
+        }
     }
 
     // --- Update Obstacles ---
