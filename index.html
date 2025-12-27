@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gingerbread Shred: Crumble Edition</title>
     <style>
         body {
@@ -107,6 +109,15 @@ let cameraX = 0; // Camera position in world space
 // Inputs
 const keys = { left: false, right: false };
 
+// Touch input state
+let touch = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0
+};
+
 // Entities
 let player = {};
 let obstacles = [];
@@ -203,6 +214,39 @@ function update(deltaTime) {
     uiScore.innerText = "SCORE: " + Math.floor(score / 10);
 
     if (Math.floor(score) % 500 === 0) gameSpeed += 0.5 * deltaTime;
+
+    // Process touch input
+    if (touch.active) {
+        const centerX = canvas.width / 2;
+        const touchOffset = touch.currentX - centerX;
+
+        // Steer based on horizontal position relative to center
+        if (touchOffset < -20) {
+            keys.left = true;
+            keys.right = false;
+        } else if (touchOffset > 20) {
+            keys.right = true;
+            keys.left = false;
+        } else {
+            keys.left = false;
+            keys.right = false;
+        }
+
+        // Speed control based on vertical drag
+        const verticalDrag = touch.startY - touch.currentY;
+        if (verticalDrag > 20) {
+            // Dragged up = slow down
+            keys.up = true;
+            keys.down = false;
+        } else if (verticalDrag < -20) {
+            // Dragged down = speed up
+            keys.down = true;
+            keys.up = false;
+        } else {
+            keys.up = false;
+            keys.down = false;
+        }
+    }
 
     // Player movement
     if (keys.left) player.angle -= 0.06 * deltaTime * 60; // Scale by deltaTime
@@ -442,7 +486,78 @@ function draw() {
         }
     }
 
+    // Draw touch indicators
+    if (touch.active && gameState === 'PLAYING') {
+        drawTouchIndicators(touch.currentX, touch.currentY);
+    }
+
     ctx.restore();
+}
+
+// --- TOUCH INDICATORS ---
+
+function drawTouchIndicators(x, y) {
+    const centerX = canvas.width / 2;
+    const touchOffset = x - centerX;
+    const verticalDrag = touch.startY - touch.currentY;
+
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+
+    // Position indicators above the touch point
+    const indicatorY = y - 80;
+    let indicatorX = x;
+
+    // Steering indicator (left/right arrows)
+    if (touchOffset < -20) {
+        // Left arrow
+        drawArrow(indicatorX - 30, indicatorY, 'left');
+    } else if (touchOffset > 20) {
+        // Right arrow
+        drawArrow(indicatorX + 30, indicatorY, 'right');
+    }
+
+    // Speed indicator (up/down arrows)
+    if (verticalDrag > 20) {
+        // Up arrow (slowing down)
+        drawArrow(indicatorX, indicatorY - 40, 'up');
+    } else if (verticalDrag < -20) {
+        // Down arrow (speeding up)
+        drawArrow(indicatorX, indicatorY + 40, 'down');
+    }
+
+    ctx.restore();
+}
+
+function drawArrow(x, y, direction) {
+    ctx.fillStyle = C.white;
+    ctx.strokeStyle = C.black;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'miter';
+
+    ctx.beginPath();
+
+    if (direction === 'left') {
+        ctx.moveTo(x - 15, y);
+        ctx.lineTo(x + 5, y - 10);
+        ctx.lineTo(x + 5, y + 10);
+    } else if (direction === 'right') {
+        ctx.moveTo(x + 15, y);
+        ctx.lineTo(x - 5, y - 10);
+        ctx.lineTo(x - 5, y + 10);
+    } else if (direction === 'up') {
+        ctx.moveTo(x, y - 15);
+        ctx.lineTo(x - 10, y + 5);
+        ctx.lineTo(x + 10, y + 5);
+    } else if (direction === 'down') {
+        ctx.moveTo(x, y + 15);
+        ctx.lineTo(x - 10, y - 5);
+        ctx.lineTo(x + 10, y - 5);
+    }
+
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 }
 
 // --- ART ASSETS (Procedural) ---
@@ -619,6 +734,47 @@ window.addEventListener('keyup', e => {
 window.addEventListener('resize', () => {
     resizeCanvas();
 });
+
+// Touch event handlers
+window.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touchX = e.touches[0].clientX - rect.left;
+    const touchY = e.touches[0].clientY - rect.top;
+
+    touch.active = true;
+    touch.startX = touchX;
+    touch.startY = touchY;
+    touch.currentX = touchX;
+    touch.currentY = touchY;
+
+    // Handle menu interactions
+    if (gameState === 'MENU' || gameState === 'GAMEOVER' || gameState === 'PAUSED') {
+        init();
+    }
+}, { passive: false });
+
+window.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!touch.active) return;
+
+    const rect = canvas.getBoundingClientRect();
+    touch.currentX = e.touches[0].clientX - rect.left;
+    touch.currentY = e.touches[0].clientY - rect.top;
+}, { passive: false });
+
+window.addEventListener('touchend', e => {
+    e.preventDefault();
+    touch.active = false;
+
+    // Reset keys when touch ends
+    if (!touch.active) {
+        keys.left = false;
+        keys.right = false;
+        keys.up = false;
+        keys.down = false;
+    }
+}, { passive: false });
 
 </script>
 </body>
