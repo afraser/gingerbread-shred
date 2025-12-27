@@ -305,8 +305,12 @@ function update(deltaTime) {
 
 /** Handle player getting hit by an obstacle. */
 function hitPlayer() {
-    // player.hp--;
-    // player.invul = 120; // 1 second invulnerability
+    if (Math.random() < 0.5) {
+        crumble();
+        return; // 30% chance to avoid damage (luck)
+    }
+    player.hp--;
+    player.invul = 120; // 1 second invulnerability
     shakeAmt = 15;
     
     // Spawn limb particles
