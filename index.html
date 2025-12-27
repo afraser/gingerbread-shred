@@ -217,14 +217,14 @@ function update(deltaTime) {
 
     // Process touch input
     if (touch.active) {
-        const centerX = canvas.width / 2;
-        const touchOffset = touch.currentX - centerX;
-
-        // Steer based on horizontal position relative to center
-        if (touchOffset < -20) {
+        // Horizontal drag for steering (relative to touch start)
+        const horizontalDrag = touch.startX - touch.currentX;
+        if (horizontalDrag > 20) {
+            // Dragged left = steer left
             keys.left = true;
             keys.right = false;
-        } else if (touchOffset > 20) {
+        } else if (horizontalDrag < -20) {
+            // Dragged right = steer right
             keys.right = true;
             keys.left = false;
         } else {
@@ -232,7 +232,7 @@ function update(deltaTime) {
             keys.right = false;
         }
 
-        // Speed control based on vertical drag
+        // Vertical drag for speed control (relative to touch start)
         const verticalDrag = touch.startY - touch.currentY;
         if (verticalDrag > 20) {
             // Dragged up = slow down
@@ -251,7 +251,7 @@ function update(deltaTime) {
     // Player movement
     if (keys.left) player.angle -= 0.06 * deltaTime * 60; // Scale by deltaTime
     if (keys.right) player.angle += 0.06 * deltaTime * 60;
-    if (keys.down) gameSpeed = Math.max(5, gameSpeed + 0.05 * deltaTime * 60);
+    if (keys.down) gameSpeed = Math.min(5, gameSpeed + 0.05 * deltaTime * 60);
     if (keys.up) gameSpeed = Math.max(0, gameSpeed - 0.05 * deltaTime * 60);
 
     // Cap max speed
@@ -266,7 +266,7 @@ function update(deltaTime) {
     // Jumping
     player.z += player.dz * deltaTime * 60;
     player.dz -= 0.4 * deltaTime * 60; // Gravity
-    player.y -= player.dz * deltaTime * 60;
+    player.y -= player.dz * deltaTime * 60; // Make the player "jump"
     if (player.z < 0) {
         player.z = 0;
         player.dz = 0;
@@ -497,8 +497,7 @@ function draw() {
 // --- TOUCH INDICATORS ---
 
 function drawTouchIndicators(x, y) {
-    const centerX = canvas.width / 2;
-    const touchOffset = x - centerX;
+    const horizontalDrag = touch.startX - touch.currentX;
     const verticalDrag = touch.startY - touch.currentY;
 
     ctx.save();
@@ -509,10 +508,10 @@ function drawTouchIndicators(x, y) {
     let indicatorX = x;
 
     // Steering indicator (left/right arrows)
-    if (touchOffset < -20) {
+    if (horizontalDrag > 20) {
         // Left arrow
         drawArrow(indicatorX - 30, indicatorY, 'left');
-    } else if (touchOffset > 20) {
+    } else if (horizontalDrag < -20) {
         // Right arrow
         drawArrow(indicatorX + 30, indicatorY, 'right');
     }
