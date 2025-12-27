@@ -668,6 +668,13 @@ function drawPlayer(player) {
 }
 
 function drawRamp(x, y) {
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 30, y + 22, 25, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ramp
     ctx.fillStyle = C.blue;
     ctx.beginPath();
     ctx.moveTo(x + 10, y);
@@ -679,19 +686,33 @@ function drawRamp(x, y) {
 }
 
 function drawTree(x, y) {
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 18, y + 30, 18, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tree
     ctx.fillStyle = C.green;
     ctx.beginPath();
     ctx.moveTo(x + 15, y - 20); // Top
     ctx.lineTo(x + 35, y + 20); // Bot Right
     ctx.lineTo(x - 5, y + 20); // Bot Left
     ctx.fill();
-    
+
     // Trunk
     ctx.fillStyle = C.brown;
     ctx.fillRect(x + 10, y + 20, 10, 10);
 }
 
 function drawRock(x, y) {
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rock
     ctx.fillStyle = C.grey;
     ctx.beginPath();
     // Irregular rocky polygon - 30px wide, 20px tall, flat bottom
