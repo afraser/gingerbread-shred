@@ -390,10 +390,10 @@ function update(deltaTime) {
 function hitPlayer() {
     if (Math.random() < 0.5) {
         crumble();
-        return; // 30% chance to avoid damage (luck)
+        return; // 50% chance to avoid damage (luck)
     }
     player.hp--;
-    player.invul = 120; // 1 second invulnerability
+    player.invul = 120; // ~2 seconds invulnerability at 60fps
     shakeAmt = 15;
 
     // Spawn limb particles
@@ -842,10 +842,8 @@ window.addEventListener('touchend', e => {
     touch.active = false;
 
     // Reset keys when touch ends
-    if (!touch.active) {
-        keys.left = false;
-        keys.right = false;
-        keys.up = false;
-        keys.down = false;
-    }
+    keys.left = false;
+    keys.right = false;
+    keys.up = false;
+    keys.down = false;
 }, { passive: false });
