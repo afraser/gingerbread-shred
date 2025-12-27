@@ -74,6 +74,57 @@ resizeCanvas();
 // Detect touch support
 const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
+// --- UTILITY FUNCTIONS ---
+
+/**
+ * Get device-specific resume text
+ * @returns {string} Resume instruction text based on device type
+ */
+function getResumeText() {
+    return isTouchDevice ? 'TAP TO RESUME' : 'PRESS SPACE TO RESUME';
+}
+
+/**
+ * Get device-specific restart text
+ * @returns {string} Restart instruction text based on device type
+ */
+function getRestartText() {
+    return isTouchDevice ? 'TAP TO RESTART' : 'PRESS SPACE TO RESTART';
+}
+
+/**
+ * Get device-specific start text
+ * @returns {string} Start instruction text based on device type
+ */
+function getStartText() {
+    return isTouchDevice ? 'TAP TO START' : 'PRESS SPACE TO START';
+}
+
+/**
+ * Display pause screen
+ */
+function setPauseScreen() {
+    startScreen.innerHTML = `
+        <h1>PAUSED</h1>
+        <br>
+        <p class="blink">${getResumeText()}</p>
+    `;
+    startScreen.style.display = 'flex';
+}
+
+/**
+ * Get touch coordinates relative to canvas
+ * @param {TouchEvent} e - Touch event
+ * @returns {{x: number, y: number}} Touch coordinates
+ */
+function getTouchCoordinates(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top
+    };
+}
+
 // Update start screen based on device type
 function updateStartScreenInstructions() {
     if (isTouchDevice) {
@@ -82,7 +133,7 @@ function updateStartScreenInstructions() {
             <p>Drag to Steer & Control Speed</p>
             <p>Double-Tap to Pause</p>
             <br>
-            <p class="blink">TAP TO START</p>
+            <p class="blink">${getStartText()}</p>
         `;
     } else {
         startScreen.innerHTML = `
@@ -91,7 +142,7 @@ function updateStartScreenInstructions() {
             <p>Up/Down to Control Speed</p>
             <p>ESC to Pause</p>
             <br>
-            <p class="blink">PRESS SPACE TO START</p>
+            <p class="blink">${getStartText()}</p>
         `;
     }
 }
@@ -386,12 +437,11 @@ function crumble() {
 /** Handle Game Over state. */
 function gameOver() {
     gameState = 'GAMEOVER';
-    const restartText = isTouchDevice ? 'TAP TO RESTART' : 'PRESS SPACE TO RESTART';
     startScreen.innerHTML = `
         <h1>CRUMBLED!</h1>
         <p>Score: ${Math.floor(score/10)}</p>
         <br>
-        <p class="blink">${restartText}</p>
+        <p class="blink">${getRestartText()}</p>
     `;
     startScreen.style.display = 'flex';
 }
@@ -712,13 +762,7 @@ window.addEventListener('keydown', e => {
     if (e.code === 'Escape') {
         if (gameState === 'PLAYING') {
             gameState = 'PAUSED';
-            const resumeText = isTouchDevice ? 'TAP TO RESUME' : 'PRESS SPACE TO RESUME';
-            startScreen.innerHTML = `
-                <h1>PAUSED</h1>
-                <br>
-                <p class="blink">${resumeText}</p>
-            `;
-            startScreen.style.display = 'flex';
+            setPauseScreen();
         }
     }
 
@@ -748,15 +792,13 @@ window.addEventListener('resize', () => {
 // Touch event handlers
 window.addEventListener('touchstart', e => {
     e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const touchX = e.touches[0].clientX - rect.left;
-    const touchY = e.touches[0].clientY - rect.top;
+    const coords = getTouchCoordinates(e);
 
     touch.active = true;
-    touch.startX = touchX;
-    touch.startY = touchY;
-    touch.currentX = touchX;
-    touch.currentY = touchY;
+    touch.startX = coords.x;
+    touch.startY = coords.y;
+    touch.currentX = coords.x;
+    touch.currentY = coords.y;
 
     // Detect double-tap for pause (during gameplay only)
     const currentTime = Date.now();
@@ -766,13 +808,7 @@ window.addEventListener('touchstart', e => {
         // Double tap detected
         if (gameState === 'PLAYING') {
             gameState = 'PAUSED';
-            const resumeText = isTouchDevice ? 'TAP TO RESUME' : 'PRESS SPACE TO RESUME';
-            startScreen.innerHTML = `
-                <h1>PAUSED</h1>
-                <br>
-                <p class="blink">${resumeText}</p>
-            `;
-            startScreen.style.display = 'flex';
+            setPauseScreen();
         }
         touch.tapCount = 0;
         touch.lastTapTime = 0;
@@ -796,9 +832,9 @@ window.addEventListener('touchmove', e => {
     e.preventDefault();
     if (!touch.active) return;
 
-    const rect = canvas.getBoundingClientRect();
-    touch.currentX = e.touches[0].clientX - rect.left;
-    touch.currentY = e.touches[0].clientY - rect.top;
+    const coords = getTouchCoordinates(e);
+    touch.currentX = coords.x;
+    touch.currentY = coords.y;
 }, { passive: false });
 
 window.addEventListener('touchend', e => {

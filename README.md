@@ -7,9 +7,9 @@
 - [ ] Stop game timer on pause.
 - [ ] Score is broken. Should be distance traveled downhill + jump scores (TBD).
 - [x] Rendering: Add shadows to obstacles.
-- [ ] Code Duplication: Extract pause screen HTML to reusable function (duplicated 3x at lines 786-790, 840-844).
-- [ ] Code Duplication: Extract touch coordinate calculation to utility function (duplicated 3x).
-- [ ] Code Duplication: Consolidate resume/restart text ternary expressions into utility functions.
+- [x] Code Duplication: Extract pause screen HTML to reusable function (duplicated 3x at lines 786-790, 840-844).
+- [x] Code Duplication: Extract touch coordinate calculation to utility function (duplicated 3x).
+- [x] Code Duplication: Consolidate resume/restart text ternary expressions into utility functions.
 - [ ] Logic Error: Fix comment at line 412 (says 30% but implements 50% chance).
 - [ ] Logic Error: Clarify invulnerability timing at line 415 (comment vs deltaTime scaling).
 - [ ] Logic Error: Remove redundant null check at lines 878-884 (touch.active always false).
