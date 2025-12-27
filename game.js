@@ -24,8 +24,12 @@ const SHOW_HITBOXES = false; // Debug flag to visualize collision boxes
 
 // Obstacle Type Definitions
 const OBSTACLE_TYPES = {
-  tree: { w: 30, h: 25 },
-  rock: { w: 30, h: 20 },
+  tree1: { w: 26, h: 20 }, // Tall Pine - narrow and tall
+  tree2: { w: 30, h: 20 }, // Layered Tree - wider with stacked layers
+  tree3: { w: 30, h: 20 }, // Bushy Tree - wide and short
+  rock1: { w: 30, h: 15 }, // Off-center hump
+  rock2: { w: 30, h: 15 }, // Classic jagged
+  rock3: { w: 40, h: 15 }, // Wide flat rock
   ramp: { w: 60, h: 20 },
 };
 
@@ -295,7 +299,20 @@ function update(deltaTime) {
   // Chance to spawn increases slightly with speed
   if (Math.random() < 0.03 + gameSpeed / 200) {
     const rand = Math.random();
-    const type = rand < 0.5 ? "tree" : rand < 0.75 ? "rock" : "ramp";
+    let type;
+
+    if (rand < 0.5) {
+      // 50% chance: tree (randomly pick variant)
+      const treeVariant = Math.floor(Math.random() * 3) + 1;
+      type = `tree${treeVariant}`;
+    } else if (rand < 0.75) {
+      // 25% chance: rock (randomly pick variant)
+      const rockVariant = Math.floor(Math.random() * 3) + 1;
+      type = `rock${rockVariant}`;
+    } else {
+      // 25% chance: ramp
+      type = "ramp";
+    }
 
     // Spawn in world coordinates around the visible area
     const worldXPos =
@@ -307,7 +324,6 @@ function update(deltaTime) {
       worldX: worldXPos,
       y: canvas.height + 50,
       active: true,
-      variant: Math.floor(Math.random() * 3) + 1, // Random variant: 1, 2, or 3
     };
 
     // Check if new obstacle collides with existing obstacles
@@ -499,8 +515,12 @@ function draw() {
 
     // Only draw if visible on screen
     if (screenX > -obstacleDef.w && screenX < canvas.width + obstacleDef.w) {
-      if (o.type === "tree") drawTree(screenX, o.y, o.variant);
-      else if (o.type === "rock") drawRock(screenX, o.y, o.variant);
+      if (o.type === "tree1") drawTree(screenX, o.y, 1);
+      else if (o.type === "tree2") drawTree(screenX, o.y, 2);
+      else if (o.type === "tree3") drawTree(screenX, o.y, 3);
+      else if (o.type === "rock1") drawRock(screenX, o.y, 1);
+      else if (o.type === "rock2") drawRock(screenX, o.y, 2);
+      else if (o.type === "rock3") drawRock(screenX, o.y, 3);
       else if (o.type === "ramp") drawRamp(screenX, o.y);
 
       // Draw hitbox
@@ -714,6 +734,9 @@ function drawRamp(x, y) {
 }
 
 function drawTree(x, y, variant = 1) {
+  // Shift entire tree up to include trunk in hitbox
+  y = y - 10;
+
   // Shadow
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.beginPath();
@@ -768,16 +791,18 @@ function drawTree(x, y, variant = 1) {
 }
 
 function drawRock(x, y, variant = 1) {
-  // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.beginPath();
-  ctx.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = C.grey;
-  ctx.beginPath();
+  // Shift entire tree up
+  y = y - 5;
 
   if (variant === 1) {
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = C.grey;
+    ctx.beginPath();
     // Variant 1: Off-center hump - peak shifted left
     ctx.moveTo(x, y + 20); // Bottom left
     ctx.lineTo(x + 3, y + 12); // Left side gentle
@@ -788,6 +813,14 @@ function drawRock(x, y, variant = 1) {
     ctx.lineTo(x + 28, y + 16); // Lower right
     ctx.lineTo(x + 30, y + 20); // Bottom right
   } else if (variant === 2) {
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = C.grey;
+    ctx.beginPath();
     // Variant 2: Classic jagged rock
     ctx.moveTo(x, y + 20); // Bottom left (flat)
     ctx.lineTo(x + 3, y + 10); // Left side jagged
@@ -799,14 +832,22 @@ function drawRock(x, y, variant = 1) {
     ctx.lineTo(x + 30, y + 14); // Right side jagged
     ctx.lineTo(x + 30, y + 20); // Bottom right (flat)
   } else {
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 20, y + 22, 20, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = C.grey;
+    ctx.beginPath();
     // Variant 3: Wide flat rock - horizontal emphasis
-    ctx.moveTo(x - 5, y + 20); // Bottom left (wider)
-    ctx.lineTo(x, y + 12); // Left side
-    ctx.lineTo(x + 5, y + 8); // Upper left
-    ctx.lineTo(x + 15, y + 5); // Low peak
-    ctx.lineTo(x + 25, y + 8); // Upper right
-    ctx.lineTo(x + 30, y + 12); // Right side
-    ctx.lineTo(x + 35, y + 20); // Bottom right (wider)
+    ctx.moveTo(x, y + 20); // Bottom left (wider)
+    ctx.lineTo(x + 5, y + 12); // Left side
+    ctx.lineTo(x + 10, y + 8); // Upper left
+    ctx.lineTo(x + 20, y + 5); // Low peak
+    ctx.lineTo(x + 30, y + 8); // Upper right
+    ctx.lineTo(x + 35, y + 12); // Right side
+    ctx.lineTo(x + 40, y + 20); // Bottom right (wider)
   }
 
   ctx.closePath();
