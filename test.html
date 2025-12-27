@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gingerbread Shred - Tests</title>
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #ff004d;
+        }
+        h2 {
+            color: #29adff;
+            margin-top: 30px;
+        }
+        #test-results {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        .pass {
+            color: #00e756;
+        }
+        .fail {
+            color: #ff004d;
+        }
+        #console-output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #000;
+            border: 1px solid #444;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .test-pass {
+            color: #00e756;
+        }
+        .test-fail {
+            color: #ff004d;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gingerbread Shred - Test Suite</h1>
+    <p>Running automated tests for collision detection and game logic.</p>
+
+    <div id="test-results">
+        <p>Tests are running...</p>
+    </div>
+
+    <h2>Console Output</h2>
+    <div id="console-output"></div>
+
+    <!-- Load game.js first to get access to checkCollision and other functions -->
+    <script src="game.js"></script>
+
+    <!-- Override console.log to capture output -->
+    <script>
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        console.log = function(...args) {
+            const message = args.join(' ');
+            const line = document.createElement('div');
+
+            if (message.startsWith('✓')) {
+                line.className = 'test-pass';
+            } else if (message.startsWith('✗')) {
+                line.className = 'test-fail';
+            }
+
+            line.textContent = message;
+            consoleOutput.appendChild(line);
+            originalLog.apply(console, args);
+        };
+
+        console.error = function(...args) {
+            const message = args.join(' ');
+            const line = document.createElement('div');
+            line.className = 'test-fail';
+            line.textContent = message;
+            consoleOutput.appendChild(line);
+            originalError.apply(console, args);
+        };
+    </script>
+
+    <!-- Load and run tests -->
+    <script src="test.js"></script>
+</body>
+</html>
