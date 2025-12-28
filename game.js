@@ -267,7 +267,29 @@ function update(deltaTime) {
   // Player movement
   if (keys.down)
     gameSpeed = Math.min(TERMINAL_VELOCITY, gameSpeed + 0.05 * deltaTime * 60);
-  if (keys.up) gameSpeed = Math.max(0, gameSpeed - 0.15 * deltaTime * 60);
+  // Braking only works when on the ground
+  if (keys.up && player.z === 0) {
+    gameSpeed = Math.max(0, gameSpeed - 0.15 * deltaTime * 60);
+
+    // Snow cloud effect when braking
+    if (gameSpeed > 0.5 && Math.random() < 0.3) {
+      // Spawn snow particles beneath the snowboard
+      for (let i = 0; i < 2; i++) {
+        particles.push({
+          worldX: player.worldX + Math.random() * 40, // Across full snowboard width
+          y: player.y + 20, // Below the snowboard
+          dx: (Math.random() - 0.5) * 5 + player.dx,
+          dy: -2.5,
+          w: 3 + Math.random() * 3,
+          h: 3 + Math.random() * 3,
+          color: "#fff",
+          rot: 0,
+          rSpeed: 0,
+          life: 20 + Math.random() * 10, // Short lifetime
+        });
+      }
+    }
+  }
 
   // Scoot mode: when speed is very low, allow direct left/right movement
   const scootThreshold = 0.5;
