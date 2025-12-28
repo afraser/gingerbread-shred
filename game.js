@@ -264,10 +264,12 @@ function update(deltaTime) {
     }
   }
 
-  // Player movement
-  if (keys.down)
+  // Acceleration
+  if (keys.down && player.z === 0) {
     gameSpeed = Math.min(TERMINAL_VELOCITY, gameSpeed + 0.05 * deltaTime * 60);
-  // Braking only works when on the ground
+  }
+
+  // Braking
   if (keys.up && player.z === 0) {
     gameSpeed = Math.max(0, gameSpeed - 0.15 * deltaTime * 60);
 
