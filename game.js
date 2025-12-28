@@ -265,17 +265,44 @@ function update(deltaTime) {
   }
 
   // Player movement
-  if (keys.left) player.angle -= 0.06 * deltaTime * 60; // Scale by deltaTime
-  if (keys.right) player.angle += 0.06 * deltaTime * 60;
   if (keys.down)
     gameSpeed = Math.min(TERMINAL_VELOCITY, gameSpeed + 0.05 * deltaTime * 60);
   if (keys.up) gameSpeed = Math.max(0, gameSpeed - 0.05 * deltaTime * 60);
 
-  player.angle *= 0.99; // Angle decay
-  player.angle = Math.max(-2, Math.min(2, player.angle)); // Clamp angle
-  player.dx = player.angle * gameSpeed * 1.5;
+  // Scoot mode: when speed is very low, allow direct left/right movement
+  const scootThreshold = 0.5;
+  const isScootMode = gameSpeed < scootThreshold;
 
-  player.worldX += player.dx * deltaTime * 60; // Scale movement by deltaTime
+  if (isScootMode) {
+    // Scoot left/right by directly moving worldX
+    const scootSpeed = 140; // Pixels per second
+    if (keys.left) {
+      player.worldX -= scootSpeed * deltaTime;
+      // Little hop animation when scooting
+      if (player.z === 0) {
+        player.dz = 3; // Small upward velocity
+      }
+    }
+    if (keys.right) {
+      player.worldX += scootSpeed * deltaTime;
+      // Little hop animation when scooting
+      if (player.z === 0) {
+        player.dz = 3; // Small upward velocity
+      }
+    }
+    player.angle = 0; // Reset angle when scooting
+    player.dx = 0;
+  } else {
+    // Normal steering: adjust angle based on left/right
+    if (keys.left) player.angle -= 0.06 * deltaTime * 60;
+    if (keys.right) player.angle += 0.06 * deltaTime * 60;
+
+    player.angle *= 0.99; // Angle decay
+    player.angle = Math.max(-2, Math.min(2, player.angle)); // Clamp angle
+    player.dx = player.angle * gameSpeed * 1.5;
+
+    player.worldX += player.dx * deltaTime * 60; // Scale movement by deltaTime
+  }
 
   // Jumping
   player.z += player.dz * deltaTime * 60;
