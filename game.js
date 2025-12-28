@@ -267,7 +267,7 @@ function update(deltaTime) {
   // Player movement
   if (keys.down)
     gameSpeed = Math.min(TERMINAL_VELOCITY, gameSpeed + 0.05 * deltaTime * 60);
-  if (keys.up) gameSpeed = Math.max(0, gameSpeed - 0.05 * deltaTime * 60);
+  if (keys.up) gameSpeed = Math.max(0, gameSpeed - 0.15 * deltaTime * 60);
 
   // Scoot mode: when speed is very low, allow direct left/right movement
   const scootThreshold = 0.5;
