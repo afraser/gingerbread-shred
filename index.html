@@ -51,6 +51,26 @@
         p { margin: 5px; color: #fff1e8; }
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
+        .bonus-text {
+            position: absolute;
+            font-weight: bold;
+            font-size: 24px;
+            color: #ffff00;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            pointer-events: none;
+            animation: bonusFloat 1s ease-out forwards;
+            z-index: 1000;
+        }
+        @keyframes bonusFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px);
+            }
+        }
     </style>
 </head>
 <body>

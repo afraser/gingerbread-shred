@@ -6,6 +6,30 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const uiScore = document.getElementById("ui");
 const startScreen = document.getElementById("startScreen");
+const gameContainer = document.getElementById("gameContainer");
+
+// --- BONUS TEXT DISPLAY ---
+
+/**
+ * Show floating bonus text above player
+ * @param {number} points - Points to display
+ */
+function showBonus(points) {
+  const bonusEl = document.createElement("div");
+  bonusEl.className = "bonus-text";
+  bonusEl.textContent = `+${points}`;
+
+  // Position above player's head
+  bonusEl.style.left = `${player.x}px`;
+  bonusEl.style.top = `${player.y - 40}px`;
+
+  gameContainer.appendChild(bonusEl);
+
+  // Remove element after animation completes
+  setTimeout(() => {
+    bonusEl.remove();
+  }, 1000);
+}
 
 // PICO-8 Palette approximation
 const C = {
@@ -20,6 +44,7 @@ const C = {
 };
 
 const TERMINAL_VELOCITY = 20;
+const PLAYER_Y = 200; // Fixed screen Y position of player
 const SHOW_HITBOXES = false; // Debug flag to visualize collision boxes
 
 // Obstacle Type Definitions
@@ -187,7 +212,7 @@ function init() {
   // Reset Player
   player = {
     x: canvas.width / 2, // Screen position (stays centered)
-    y: 100,
+    y: PLAYER_Y,
     w: 40,
     h: 15, // Hitbox is small here because we only care if feet/board hit
     worldX: 0, // Position in world space
@@ -197,6 +222,11 @@ function init() {
     invul: 0,
     z: 0, // Jump height
     dz: 0, // Jump velocity
+    flipState: 0, // 0:upright, 1:laid-back, 2:upside-down, 3:laid-forward
+    lastFlipState: 0, // Track previous flip state to detect completed rotations
+    flipsCompleted: 0, // Count full rotations while airborne
+    crashed: false,
+    crashTimer: 0,
   };
 
   obstacles = [];
@@ -264,8 +294,32 @@ function update(deltaTime) {
     }
   }
 
-  // Acceleration
-  if (keys.down && player.z === 0) {
+  // Flip controls when airborne (only at reasonable speed)
+  const minFlipSpeed = 2; // Minimum speed required to flip
+  if (player.z > 0 && gameSpeed >= minFlipSpeed) {
+    // Down arrow advances flip, Up arrow reverses flip
+    if (keys.down) {
+      player.flipState = (player.flipState + 1) % 4;
+      keys.down = false; // Consume the key press
+    }
+    if (keys.up) {
+      player.flipState = (player.flipState + 3) % 4; // +3 is same as -1 in mod 4
+      keys.up = false; // Consume the key press
+    }
+
+    // Detect completed flip (returning to upright while airborne)
+    if (player.flipState === 0 && player.lastFlipState !== 0) {
+      // Completed a full rotation (either forward or backward)
+      if (player.lastFlipState === 3 || player.lastFlipState === 1) {
+        player.flipsCompleted++;
+      }
+    }
+
+    player.lastFlipState = player.flipState;
+  }
+
+  // Acceleration (disabled when crashed)
+  if (keys.down && player.z === 0 && !player.crashed) {
     gameSpeed = Math.min(TERMINAL_VELOCITY, gameSpeed + 0.05 * deltaTime * 60);
   }
 
@@ -335,12 +389,45 @@ function update(deltaTime) {
   if (player.z < 0) {
     player.z = 0;
     player.dz = 0;
-    player.y = 100; // Reset Y position when landing
+    player.y = PLAYER_Y; // Reset Y position when landing
+
+    // Check for successful flip landing
+    if (player.flipState === 0 && player.flipsCompleted > 0) {
+      // Award bonus: 5000 per flip
+      const flipBonus = player.flipsCompleted * 5000;
+      score += flipBonus;
+      showBonus(flipBonus);
+    }
+
+    // Check for crash landing (landing in non-upright state)
+    if (player.flipState !== 0 && !player.crashed) {
+      player.crashed = true;
+      player.crashTimer = 60; // ~1 second recovery at 60fps
+      gameSpeed *= 0.3; // Greatly diminish velocity
+      if (player.flipState === 2) {
+        hitPlayer(); // Hit if landing upside-down
+      } else {
+        crumble(); // Just crumble limbs otherwise
+      }
+    }
+
+    // Reset flip tracking on landing
+    player.flipsCompleted = 0;
+    player.lastFlipState = 0;
   }
   cameraX = player.worldX;
 
   // Invulnerability ticker
   if (player.invul > 0) player.invul--;
+
+  // Crash timer countdown and recovery
+  if (player.crashed && player.crashTimer > 0) {
+    player.crashTimer--;
+    if (player.crashTimer === 0) {
+      player.crashed = false;
+      player.flipState = 0; // Return to upright
+    }
+  }
 
   // --- Screen Shake Decay ---
   if (shakeAmt > 0) shakeAmt *= 0.9;
@@ -432,8 +519,13 @@ function update(deltaTime) {
 
       if (checkCollision(playerBox, obstacleBox)) {
         if (o.type === "ramp") {
-          player.dz = gameSpeed * 1.5; // Jump boost
-          score += 100 * gameSpeed; // Jump score bonus
+          player.dz = gameSpeed * 1.5 + 5; // Jump boost
+          const jumpBonus = Math.floor(100 * gameSpeed);
+          score += jumpBonus; // Jump score bonus
+          showBonus(jumpBonus);
+          // Reset flip tracking when taking off
+          player.flipsCompleted = 0;
+          player.lastFlipState = 0;
         } else {
           hitPlayer();
         }
@@ -469,8 +561,8 @@ function update(deltaTime) {
 }
 
 /** Handle player getting hit by an obstacle. */
-function hitPlayer() {
-  if (Math.random() < 0.5) {
+function hitPlayer(crumbleThreshold = 0.5) {
+  if (Math.random() < crumbleThreshold) {
     crumble();
     return; // 50% chance to avoid damage (luck)
   }
@@ -689,7 +781,7 @@ function drawArrow(x, y, direction) {
 // --- ART ASSETS (Procedural) ---
 
 function drawPlayer(player) {
-  const { x, y, z, hp, angle } = player;
+  const { x, y, z, hp, angle, flipState } = player;
   ctx.save();
   ctx.translate(x, y);
   // Shift all drawing to align drawing with player hitbox coords
@@ -713,6 +805,25 @@ function drawPlayer(player) {
   ctx.lineWidth = 2;
   ctx.stroke();
 
+  // Draw player based on flip state
+  if (flipState === 0) {
+    // Upright (normal) position
+    drawPlayerUpright(hp);
+  } else if (flipState === 1) {
+    // Laid-back position
+    drawPlayerLaidBack(hp);
+  } else if (flipState === 2) {
+    // Upside-down (facing backward) position
+    drawPlayerUpsideDown(hp);
+  } else if (flipState === 3) {
+    // Laid-forward position
+    drawPlayerLaidForward(hp);
+  }
+
+  ctx.restore();
+}
+
+function drawPlayerUpright(hp) {
   if (hp > 0) {
     // HEAD (Always draw unless dead)
     // Position head lower when HP is 1 to sit on snowboard
@@ -762,6 +873,149 @@ function drawPlayer(player) {
     ctx.fillStyle = C.brown;
     ctx.fillRect(10, -5, 12, 8);
     ctx.strokeRect(10, -5, 12, 8);
+  }
+}
+
+function drawPlayerLaidBack(hp) {
+  // Player leaning back, body tilted backward
+  ctx.save();
+  ctx.rotate(-0.5); // Lean back
+
+  if (hp > 0) {
+    // HEAD - positioned above body
+    ctx.fillStyle = C.brown;
+    ctx.beginPath();
+    ctx.arc(0, -20, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Face
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(-5, -23, 4, 4);
+    ctx.fillRect(1, -23, 4, 4);
+    ctx.fillStyle = C.red;
+    ctx.fillRect(-3, -15, 6, 2);
+  }
+
+  // TORSO & LEGS
+  if (hp > 1) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(-10, -5, 20, 20);
+    ctx.strokeRect(-10, -5, 20, 20);
+    ctx.fillStyle = C.green;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 8, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ARMS - extended outward
+  if (hp > 2) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(-25, -3, 15, 8);
+    ctx.strokeRect(-25, -3, 15, 8);
+  }
+  if (hp > 3) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(10, -3, 15, 8);
+    ctx.strokeRect(10, -3, 15, 8);
+  }
+
+  ctx.restore();
+}
+
+function drawPlayerUpsideDown(hp) {
+  // Player completely upside down
+  ctx.save();
+  ctx.rotate(Math.PI); // 180 degrees
+
+  if (hp > 0) {
+    // HEAD - now at bottom when rotated
+    let headY = hp === 1 ? 3 : -15;
+
+    ctx.fillStyle = C.brown;
+    ctx.beginPath();
+    ctx.arc(0, headY, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // TORSO & LEGS
+  if (hp > 1) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(-10, -5, 20, 20);
+    ctx.strokeRect(-10, -5, 20, 20);
+    ctx.fillStyle = C.green;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 8, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ARMS
+  if (hp > 2) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(-22, -5, 12, 8);
+    ctx.strokeRect(-22, -5, 12, 8);
+  }
+  if (hp > 3) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(10, -5, 12, 8);
+    ctx.strokeRect(10, -5, 12, 8);
+  }
+
+  ctx.restore();
+}
+
+function drawPlayerLaidForward(hp) {
+  // Player leaning forward, body tilted forward
+  ctx.save();
+  ctx.rotate(0.5); // Lean forward
+
+  if (hp > 0) {
+    // HEAD - positioned above body
+    ctx.fillStyle = C.brown;
+    ctx.beginPath();
+    ctx.arc(0, -20, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Face
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(-5, -23, 4, 4);
+    ctx.fillRect(1, -23, 4, 4);
+    ctx.fillStyle = C.red;
+    ctx.fillRect(-3, -15, 6, 2);
+  }
+
+  // TORSO & LEGS
+  if (hp > 1) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(-10, -5, 20, 20);
+    ctx.strokeRect(-10, -5, 20, 20);
+    ctx.fillStyle = C.green;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 8, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ARMS - tucked in forward
+  if (hp > 2) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(-25, 0, 15, 8);
+    ctx.strokeRect(-25, 0, 15, 8);
+  }
+  if (hp > 3) {
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(10, 0, 15, 8);
+    ctx.strokeRect(10, 0, 15, 8);
   }
 
   ctx.restore();
