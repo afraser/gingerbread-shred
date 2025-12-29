@@ -1,3 +1,9 @@
+# Gingerbread Shred
+
+You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. Don't lose your head.
+
+https://afraser.github.io/gingerbread-shred/
+
 # TODO
 
 - [ ] Mobile: Player and score are cut off at top of screen for some reason.
