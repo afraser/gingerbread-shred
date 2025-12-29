@@ -2,11 +2,11 @@
  * A Javascript port of the PICO-8 Design Doc
  */
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const uiScore = document.getElementById("ui");
-const startScreen = document.getElementById("startScreen");
-const gameContainer = document.getElementById("gameContainer");
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const uiScore = document.getElementById('ui');
+const startScreen = document.getElementById('startScreen');
+const gameContainer = document.getElementById('gameContainer');
 
 // --- BONUS TEXT DISPLAY ---
 
@@ -17,8 +17,8 @@ const gameContainer = document.getElementById("gameContainer");
 function showBonus(points) {
   if (!gameContainer) return; // Guard for test environment
 
-  const bonusEl = document.createElement("div");
-  bonusEl.className = "bonus-text";
+  const bonusEl = document.createElement('div');
+  bonusEl.className = 'bonus-text';
   bonusEl.textContent = `+${points}`;
 
   // Position above player's head
@@ -35,14 +35,15 @@ function showBonus(points) {
 
 // PICO-8 Palette approximation
 const C = {
-  white: "#fff1e8",
-  black: "#000000",
-  brown: "#ab5236", // Gingerbread
-  green: "#008751", // Tree
-  grey: "#5f574f", // Rock
-  red: "#ff004d", // Buttons
-  blue: "#29adff", // Sky/Ice
-  light_grey: "#c2c3c7",
+  white: '#fff1e8',
+  black: '#000000',
+  brown: '#ab5236', // Gingerbread
+  green: '#008751', // Tree
+  green2: '#30c873', // sprinkles
+  grey: '#5f574f', // Rock
+  red: '#ff004d', // Buttons
+  blue: '#29adff', // Sky/Ice
+  light_grey: '#c2c3c7',
 };
 
 // --- GAME CONSTANTS ---
@@ -162,7 +163,7 @@ const OBSTACLE_TYPES = {
 };
 
 // Game State
-let gameState = "MENU"; // MENU, PLAYING, GAMEOVER
+let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
 let score = 0;
 let gameSpeed = INITIAL_GAME_SPEED;
 let shakeAmt = 0;
@@ -194,7 +195,7 @@ function resizeCanvas() {
   canvas.height = window.innerHeight;
 
   // Reinitialize player position if game is running
-  if (gameState === "PLAYING" && player.x) {
+  if (gameState === 'PLAYING' && player.x) {
     player.x = canvas.width / 2;
   }
 }
@@ -203,7 +204,7 @@ function resizeCanvas() {
 resizeCanvas();
 
 // Detect touch support
-const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 // --- UTILITY FUNCTIONS ---
 
@@ -212,7 +213,7 @@ const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
  * @returns {string} Resume instruction text based on device type
  */
 function getResumeText() {
-  return isTouchDevice ? "TAP TO RESUME" : "PRESS SPACE TO RESUME";
+  return isTouchDevice ? 'TAP TO RESUME' : 'PRESS SPACE TO RESUME';
 }
 
 /**
@@ -220,7 +221,7 @@ function getResumeText() {
  * @returns {string} Restart instruction text based on device type
  */
 function getRestartText() {
-  return isTouchDevice ? "TAP TO RESTART" : "PRESS SPACE TO RESTART";
+  return isTouchDevice ? 'TAP TO RESTART' : 'PRESS SPACE TO RESTART';
 }
 
 /**
@@ -228,7 +229,7 @@ function getRestartText() {
  * @returns {string} Start instruction text based on device type
  */
 function getStartText() {
-  return isTouchDevice ? "TAP TO START" : "PRESS SPACE TO START";
+  return isTouchDevice ? 'TAP TO START' : 'PRESS SPACE TO START';
 }
 
 /**
@@ -240,7 +241,7 @@ function setPauseScreen() {
         <br>
         <p class="blink">${getResumeText()}</p>
     `;
-  startScreen.style.display = "flex";
+  startScreen.style.display = 'flex';
 }
 
 /**
@@ -349,9 +350,9 @@ function init() {
     });
   }
 
-  gameState = "PLAYING";
-  startScreen.style.display = "none";
-  uiScore.innerText = "SCORE: 0";
+  gameState = 'PLAYING';
+  startScreen.style.display = 'none';
+  uiScore.innerText = 'SCORE: 0';
   updateButtonVisibility();
 
   loop();
@@ -360,12 +361,12 @@ function init() {
 // --- UPDATE LOOP ---
 
 function update(deltaTime) {
-  if (gameState !== "PLAYING") return;
+  if (gameState !== 'PLAYING') return;
 
   // Score based on distance traveled downhill
   score += gameSpeed * deltaTime; // Distance-based scoring
   if (uiScore) {
-    uiScore.innerText = "SCORE: " + Math.floor(score).toLocaleString();
+    uiScore.innerText = 'SCORE: ' + Math.floor(score).toLocaleString();
   }
 
   // Touch input is now handled via on-screen buttons
@@ -423,7 +424,7 @@ function update(deltaTime) {
           dy: BRAKE_PARTICLE_DY,
           w: BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
           h: BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
-          color: "#fff",
+          color: '#fff',
           rot: 0,
           rSpeed: 0,
           life:
@@ -536,7 +537,7 @@ function update(deltaTime) {
       type = `rock${rockVariant}`;
     } else {
       // 25% chance: ramp
-      type = "ramp";
+      type = 'ramp';
     }
 
     // Spawn in world coordinates around the visible area
@@ -606,7 +607,7 @@ function update(deltaTime) {
       };
 
       if (checkCollision(playerBox, obstacleBox)) {
-        if (o.type === "ramp") {
+        if (o.type === 'ramp') {
           player.dz = gameSpeed * JUMP_BOOST_MULTIPLIER + JUMP_BOOST_BASE; // Jump boost
           const jumpBonus = Math.floor(JUMP_BONUS_MULTIPLIER * gameSpeed);
           score += jumpBonus; // Jump score bonus
@@ -700,14 +701,14 @@ function crumble() {
 
 /** Handle Game Over state. */
 function gameOver() {
-  gameState = "GAMEOVER";
+  gameState = 'GAMEOVER';
   startScreen.innerHTML = `
         <h1>CRUMBLED!</h1>
         <p>Score: ${Math.floor(score)}</p>
         <br>
         <p class="blink">${getRestartText()}</p>
     `;
-  startScreen.style.display = "flex";
+  startScreen.style.display = 'flex';
   updateButtonVisibility();
 }
 
@@ -718,7 +719,7 @@ function gameOver() {
  */
 function getObstacleBottom(obstacle) {
   // Rocks have a smaller visual bottom due to their y-shift
-  if (obstacle.type.startsWith("rock")) {
+  if (obstacle.type.startsWith('rock')) {
     return obstacle.y + 15;
   }
   // Trees and ramps
@@ -743,7 +744,7 @@ function draw() {
   }
 
   // Draw Snow (Background)
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = '#fff';
   snow.forEach((s) => {
     // Convert world X to screen X with parallax effect (0.5 = slower than obstacles)
     let screenX = (s.worldX - cameraX) * PARALLAX_FACTOR + canvas.width / 2;
@@ -768,17 +769,17 @@ function draw() {
 
     // Only draw if visible on screen
     if (screenX > -obstacleDef.w && screenX < canvas.width + obstacleDef.w) {
-      if (o.type === "tree1") drawTree(screenX, o.y, 1);
-      else if (o.type === "tree2") drawTree(screenX, o.y, 2);
-      else if (o.type === "tree3") drawTree(screenX, o.y, 3);
-      else if (o.type === "rock1") drawRock(screenX, o.y, 1);
-      else if (o.type === "rock2") drawRock(screenX, o.y, 2);
-      else if (o.type === "rock3") drawRock(screenX, o.y, 3);
-      else if (o.type === "ramp") drawRamp(screenX, o.y);
+      if (o.type === 'tree1') drawTree(screenX, o.y, 1);
+      else if (o.type === 'tree2') drawTree(screenX, o.y, 2);
+      else if (o.type === 'tree3') drawTree(screenX, o.y, 3);
+      else if (o.type === 'rock1') drawRock(screenX, o.y, 1);
+      else if (o.type === 'rock2') drawRock(screenX, o.y, 2);
+      else if (o.type === 'rock3') drawRock(screenX, o.y, 3);
+      else if (o.type === 'ramp') drawRamp(screenX, o.y);
 
       // Draw hitbox
       if (SHOW_HITBOXES) {
-        ctx.strokeStyle = "red";
+        ctx.strokeStyle = 'red';
         ctx.lineWidth = 2;
         ctx.strokeRect(screenX, o.y, obstacleDef.w, obstacleDef.h);
       }
@@ -799,7 +800,7 @@ function draw() {
   });
 
   // Draw Player
-  if (gameState !== "GAMEOVER") {
+  if (gameState !== 'GAMEOVER') {
     // Blink if invulnerable
     if (Math.floor(player.invul / INVUL_BLINK_DIVISOR) % 2 === 0) {
       drawPlayer(player);
@@ -807,7 +808,7 @@ function draw() {
       // Draw player hitbox (in screen space)
       if (SHOW_HITBOXES) {
         const screenX = player.worldX - cameraX + canvas.width / 2;
-        ctx.strokeStyle = "red";
+        ctx.strokeStyle = 'red';
         ctx.lineWidth = 2;
         ctx.strokeRect(screenX, player.y, player.w, player.h);
       }
@@ -825,17 +826,17 @@ function draw() {
 
     // Only draw if visible on screen
     if (screenX > -obstacleDef.w && screenX < canvas.width + obstacleDef.w) {
-      if (o.type === "tree1") drawTree(screenX, o.y, 1);
-      else if (o.type === "tree2") drawTree(screenX, o.y, 2);
-      else if (o.type === "tree3") drawTree(screenX, o.y, 3);
-      else if (o.type === "rock1") drawRock(screenX, o.y, 1);
-      else if (o.type === "rock2") drawRock(screenX, o.y, 2);
-      else if (o.type === "rock3") drawRock(screenX, o.y, 3);
-      else if (o.type === "ramp") drawRamp(screenX, o.y);
+      if (o.type === 'tree1') drawTree(screenX, o.y, 1);
+      else if (o.type === 'tree2') drawTree(screenX, o.y, 2);
+      else if (o.type === 'tree3') drawTree(screenX, o.y, 3);
+      else if (o.type === 'rock1') drawRock(screenX, o.y, 1);
+      else if (o.type === 'rock2') drawRock(screenX, o.y, 2);
+      else if (o.type === 'rock3') drawRock(screenX, o.y, 3);
+      else if (o.type === 'ramp') drawRamp(screenX, o.y);
 
       // Draw hitbox
       if (SHOW_HITBOXES) {
-        ctx.strokeStyle = "blue"; // Different color for obstacles in front
+        ctx.strokeStyle = 'blue'; // Different color for obstacles in front
         ctx.lineWidth = 2;
         ctx.strokeRect(screenX, o.y, obstacleDef.w, obstacleDef.h);
       }
@@ -861,22 +862,22 @@ function drawTouchIndicators(x, y) {
   // Steering indicator (left/right arrows)
   if (horizontalDrag > TOUCH_DRAG_THRESHOLD) {
     // Left arrow
-    drawArrow(indicatorX - TOUCH_INDICATOR_SPACING, indicatorY, "left");
+    drawArrow(indicatorX - TOUCH_INDICATOR_SPACING, indicatorY, 'left');
   } else if (horizontalDrag < -TOUCH_DRAG_THRESHOLD) {
     // Right arrow
-    drawArrow(indicatorX + TOUCH_INDICATOR_SPACING, indicatorY, "right");
+    drawArrow(indicatorX + TOUCH_INDICATOR_SPACING, indicatorY, 'right');
   }
 
   // Speed indicator (up/down arrows)
   if (verticalDrag > TOUCH_DRAG_THRESHOLD) {
     // Up arrow (slowing down)
-    drawArrow(indicatorX, indicatorY - TOUCH_INDICATOR_VERTICAL_SPACING, "up");
+    drawArrow(indicatorX, indicatorY - TOUCH_INDICATOR_VERTICAL_SPACING, 'up');
   } else if (verticalDrag < -TOUCH_DRAG_THRESHOLD) {
     // Down arrow (speeding up)
     drawArrow(
       indicatorX,
       indicatorY + TOUCH_INDICATOR_VERTICAL_SPACING,
-      "down"
+      'down'
     );
   }
 
@@ -887,23 +888,23 @@ function drawArrow(x, y, direction) {
   ctx.fillStyle = C.white;
   ctx.strokeStyle = C.black;
   ctx.lineWidth = 2;
-  ctx.lineJoin = "miter";
+  ctx.lineJoin = 'miter';
 
   ctx.beginPath();
 
-  if (direction === "left") {
+  if (direction === 'left') {
     ctx.moveTo(x - 15, y);
     ctx.lineTo(x + 5, y - 10);
     ctx.lineTo(x + 5, y + 10);
-  } else if (direction === "right") {
+  } else if (direction === 'right') {
     ctx.moveTo(x + 15, y);
     ctx.lineTo(x - 5, y - 10);
     ctx.lineTo(x - 5, y + 10);
-  } else if (direction === "up") {
+  } else if (direction === 'up') {
     ctx.moveTo(x, y - 15);
     ctx.lineTo(x - 10, y + 5);
     ctx.lineTo(x + 10, y + 5);
-  } else if (direction === "down") {
+  } else if (direction === 'down') {
     ctx.moveTo(x, y + 15);
     ctx.lineTo(x - 10, y - 5);
     ctx.lineTo(x + 10, y - 5);
@@ -965,9 +966,9 @@ function drawPlayerUpright(hp, c = ctx) {
   if (hp > 0) {
     // HEAD (Always draw unless dead)
     // Position head lower when HP is 1 to sit on snowboard
-    let headY = hp === 1 ? 3 : -15;
-    let eyeY = hp === 1 ? 0 : -18;
-    let mouthY = hp === 1 ? 8 : -10;
+    let headY = hp === 1 ? 7 : -15;
+    let eyeY = hp === 1 ? 3 : -18;
+    let mouthY = hp === 1 ? 11 : -11;
 
     c.fillStyle = C.brown;
     c.beginPath();
@@ -976,9 +977,11 @@ function drawPlayerUpright(hp, c = ctx) {
     c.stroke();
 
     // Face
-    c.fillStyle = "#fff"; // Eyes
-    c.fillRect(-5, eyeY, 4, 4);
-    c.fillRect(1, eyeY, 4, 4);
+    c.fillStyle = '#fff'; // Eyes
+    c.beginPath();
+    c.roundRect(-5, eyeY, 3, 5, 2);
+    c.roundRect(2, eyeY, 3, 5, 2);
+    c.fill();
     c.fillStyle = C.red; // Mouth
     c.fillRect(-3, mouthY, 6, 2);
   }
@@ -1023,12 +1026,12 @@ function drawPlayerUpright(hp, c = ctx) {
     c.fillRect(-10, -5, 20, 18);
     c.strokeRect(-10, -5, 20, 18);
     // Buttons
-    c.fillStyle = C.green;
+    c.fillStyle = C.green2;
     c.beginPath();
-    c.arc(0, 0, 3, 0, Math.PI * 2);
+    c.arc(0, 0, 2.5, 0, Math.PI * 2);
     c.fill();
     c.beginPath();
-    c.arc(0, 8, 3, 0, Math.PI * 2);
+    c.arc(0, 8, 2.5, 0, Math.PI * 2);
     c.fill();
   }
 }
@@ -1047,9 +1050,11 @@ function drawPlayerLaidBack(hp, c = ctx) {
     c.stroke();
 
     // Face
-    c.fillStyle = "#fff";
-    c.fillRect(-5, -23, 4, 4);
-    c.fillRect(1, -23, 4, 4);
+    c.fillStyle = '#fff';
+    c.beginPath();
+    c.roundRect(-5, -23, 3, 5, 2);
+    c.roundRect(2, -23, 3, 5, 2);
+    c.fill();
     c.fillStyle = C.red;
     c.fillRect(-3, -15, 6, 2);
   }
@@ -1090,12 +1095,12 @@ function drawPlayerLaidBack(hp, c = ctx) {
     c.fillStyle = C.brown;
     c.fillRect(-10, -5, 20, 18);
     c.strokeRect(-10, -5, 20, 18);
-    c.fillStyle = C.green;
+    c.fillStyle = C.green2;
     c.beginPath();
-    c.arc(0, 0, 3, 0, Math.PI * 2);
+    c.arc(0, 0, 2.5, 0, Math.PI * 2);
     c.fill();
     c.beginPath();
-    c.arc(0, 8, 3, 0, Math.PI * 2);
+    c.arc(0, 8, 2.5, 0, Math.PI * 2);
     c.fill();
   }
 
@@ -1173,9 +1178,11 @@ function drawPlayerLaidForward(hp, c = ctx) {
     c.stroke();
 
     // Face
-    c.fillStyle = "#fff";
-    c.fillRect(-5, -23, 4, 4);
-    c.fillRect(1, -23, 4, 4);
+    c.fillStyle = '#fff';
+    c.beginPath();
+    c.roundRect(-5, -23, 3, 5, 2);
+    c.roundRect(2, -23, 3, 5, 2);
+    c.fill();
     c.fillStyle = C.red;
     c.fillRect(-3, -15, 6, 2);
   }
@@ -1216,12 +1223,12 @@ function drawPlayerLaidForward(hp, c = ctx) {
     c.fillStyle = C.brown;
     c.fillRect(-10, -5, 20, 18);
     c.strokeRect(-10, -5, 20, 18);
-    c.fillStyle = C.green;
+    c.fillStyle = C.green2;
     c.beginPath();
-    c.arc(0, 0, 3, 0, Math.PI * 2);
+    c.arc(0, 0, 2.5, 0, Math.PI * 2);
     c.fill();
     c.beginPath();
-    c.arc(0, 8, 3, 0, Math.PI * 2);
+    c.arc(0, 8, 2.5, 0, Math.PI * 2);
     c.fill();
   }
 
@@ -1230,7 +1237,7 @@ function drawPlayerLaidForward(hp, c = ctx) {
 
 function drawRamp(x, y, c = ctx) {
   // Shadow
-  c.fillStyle = "rgba(0,0,0,0.2)";
+  c.fillStyle = 'rgba(0,0,0,0.2)';
   c.beginPath();
   c.ellipse(x + 30, y + 22, 25, 8, 0, 0, Math.PI * 2);
   c.fill();
@@ -1253,7 +1260,7 @@ function drawTree(x, y, variant = 1, c = ctx) {
   if (variant === 1) {
     // Variant 1: Tall Pine - narrow, tall triangle
     // Shadow
-    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.fillStyle = 'rgba(0,0,0,0.2)';
     c.beginPath();
     c.ellipse(x + 18, y + 30, 18, 6, 0, 0, Math.PI * 2);
     c.fill();
@@ -1270,7 +1277,7 @@ function drawTree(x, y, variant = 1, c = ctx) {
   } else if (variant === 2) {
     // Variant 2: Layered Tree - stacked triangles
     // Shadow
-    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.fillStyle = 'rgba(0,0,0,0.2)';
     c.beginPath();
     c.ellipse(x + 20, y + 30, 20, 6, 0, 0, Math.PI * 2);
     c.fill();
@@ -1310,7 +1317,7 @@ function drawTree(x, y, variant = 1, c = ctx) {
   } else {
     // Variant 3: Bushy Tree - wider, shorter triangle
     // Shadow
-    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.fillStyle = 'rgba(0,0,0,0.2)';
     c.beginPath();
     c.ellipse(x + 18, y + 30, 25, 6, 0, 0, Math.PI * 2);
     c.fill();
@@ -1333,7 +1340,7 @@ function drawRock(x, y, variant = 1, c = ctx) {
 
   if (variant === 1) {
     // Shadow
-    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.fillStyle = 'rgba(0,0,0,0.2)';
     c.beginPath();
     c.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
     c.fill();
@@ -1351,7 +1358,7 @@ function drawRock(x, y, variant = 1, c = ctx) {
     c.lineTo(x + 30, y + 20); // Bottom right
   } else if (variant === 2) {
     // Shadow
-    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.fillStyle = 'rgba(0,0,0,0.2)';
     c.beginPath();
     c.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
     c.fill();
@@ -1370,7 +1377,7 @@ function drawRock(x, y, variant = 1, c = ctx) {
     c.lineTo(x + 30, y + 20); // Bottom right (flat)
   } else {
     // Shadow
-    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.fillStyle = 'rgba(0,0,0,0.2)';
     c.beginPath();
     c.ellipse(x + 20, y + 22, 20, 6, 0, 0, Math.PI * 2);
     c.fill();
@@ -1394,7 +1401,7 @@ function drawRock(x, y, variant = 1, c = ctx) {
 // --- GAME LOOP ---
 
 function loop() {
-  if (gameState !== "PLAYING") return;
+  if (gameState !== 'PLAYING') return;
   const now = performance.now();
   let deltaTime = (now - lastTime) / 1000; // Convert to seconds
   lastTime = now;
@@ -1412,45 +1419,45 @@ let lastTime = performance.now();
 
 // --- LISTENERS ---
 
-window.addEventListener("keydown", (e) => {
-  if (e.code === "ArrowLeft") keys.left = true;
-  if (e.code === "ArrowRight") keys.right = true;
-  if (e.code === "ArrowDown") keys.down = true;
-  if (e.code === "ArrowUp") keys.up = true;
-  if (e.code === "Escape") {
-    if (gameState === "PLAYING") {
-      gameState = "PAUSED";
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowLeft') keys.left = true;
+  if (e.code === 'ArrowRight') keys.right = true;
+  if (e.code === 'ArrowDown') keys.down = true;
+  if (e.code === 'ArrowUp') keys.up = true;
+  if (e.code === 'Escape') {
+    if (gameState === 'PLAYING') {
+      gameState = 'PAUSED';
       setPauseScreen();
       updateButtonVisibility();
     }
   }
 
-  if (e.code === "Space") {
-    if (gameState === "PAUSED") {
-      gameState = "PLAYING";
-      startScreen.style.display = "none";
+  if (e.code === 'Space') {
+    if (gameState === 'PAUSED') {
+      gameState = 'PLAYING';
+      startScreen.style.display = 'none';
       updateButtonVisibility();
       loop();
-    } else if (gameState === "MENU" || gameState === "GAMEOVER") {
+    } else if (gameState === 'MENU' || gameState === 'GAMEOVER') {
       init();
     }
   }
 });
 
-window.addEventListener("keyup", (e) => {
-  if (e.code === "ArrowLeft") keys.left = false;
-  if (e.code === "ArrowRight") keys.right = false;
-  if (e.code === "ArrowDown") keys.down = false;
-  if (e.code === "ArrowUp") keys.up = false;
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'ArrowLeft') keys.left = false;
+  if (e.code === 'ArrowRight') keys.right = false;
+  if (e.code === 'ArrowDown') keys.down = false;
+  if (e.code === 'ArrowUp') keys.up = false;
 });
 
-window.addEventListener("resize", () => {
+window.addEventListener('resize', () => {
   resizeCanvas();
 });
 
 // Touch event handlers
 window.addEventListener(
-  "touchstart",
+  'touchstart',
   (e) => {
     e.preventDefault();
     const coords = getTouchCoordinates(e);
@@ -1468,8 +1475,8 @@ window.addEventListener(
 
     if (tapGap < DOUBLE_TAP_THRESHOLD_MS && tapGap > 0) {
       // Double tap detected
-      if (gameState === "PLAYING") {
-        gameState = "PAUSED";
+      if (gameState === 'PLAYING') {
+        gameState = 'PAUSED';
         setPauseScreen();
         updateButtonVisibility();
       }
@@ -1479,11 +1486,11 @@ window.addEventListener(
       touch.lastTapTime = currentTime;
 
       // Handle menu interactions with single tap
-      if (gameState === "MENU" || gameState === "GAMEOVER") {
+      if (gameState === 'MENU' || gameState === 'GAMEOVER') {
         init();
-      } else if (gameState === "PAUSED") {
-        gameState = "PLAYING";
-        startScreen.style.display = "none";
+      } else if (gameState === 'PAUSED') {
+        gameState = 'PLAYING';
+        startScreen.style.display = 'none';
         updateButtonVisibility();
         loop();
       }
@@ -1493,7 +1500,7 @@ window.addEventListener(
 );
 
 window.addEventListener(
-  "touchmove",
+  'touchmove',
   (e) => {
     e.preventDefault();
     if (!touch.active) return;
@@ -1508,7 +1515,7 @@ window.addEventListener(
 );
 
 window.addEventListener(
-  "touchend",
+  'touchend',
   (e) => {
     e.preventDefault();
     touch.active = false;
@@ -1527,7 +1534,7 @@ function updateButtonVisibility() {
     document.getElementById('btn-pause'),
   ];
 
-  buttons.forEach(btn => {
+  buttons.forEach((btn) => {
     if (shouldShow) {
       btn.classList.add('visible');
     } else {
@@ -1539,27 +1546,39 @@ function updateButtonVisibility() {
 // Helper function to add event listeners to a direction button
 function addDirectionButtonListeners(button, direction) {
   // Handle touchstart - press button
-  button.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    button.classList.add('pressed');
-    keys[direction] = true;
-  }, { passive: false });
+  button.addEventListener(
+    'touchstart',
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      button.classList.add('pressed');
+      keys[direction] = true;
+    },
+    { passive: false }
+  );
 
   // Handle touchend - release button
-  button.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    button.classList.remove('pressed');
-    keys[direction] = false;
-  }, { passive: false });
+  button.addEventListener(
+    'touchend',
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      button.classList.remove('pressed');
+      keys[direction] = false;
+    },
+    { passive: false }
+  );
 
   // Handle touchcancel - release button if touch is cancelled
-  button.addEventListener('touchcancel', (e) => {
-    e.preventDefault();
-    button.classList.remove('pressed');
-    keys[direction] = false;
-  }, { passive: false });
+  button.addEventListener(
+    'touchcancel',
+    (e) => {
+      e.preventDefault();
+      button.classList.remove('pressed');
+      keys[direction] = false;
+    },
+    { passive: false }
+  );
 
   // Desktop testing with mouse
   button.addEventListener('mousedown', (e) => {
@@ -1588,13 +1607,17 @@ addDirectionButtonListeners(btnUp, 'up');
 addDirectionButtonListeners(btnDown, 'down');
 
 // Pause button has special behavior
-btnPause.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  gameState = 'PAUSED';
-  setPauseScreen();
-  updateButtonVisibility();
-}, { passive: false });
+btnPause.addEventListener(
+  'touchstart',
+  (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    gameState = 'PAUSED';
+    setPauseScreen();
+    updateButtonVisibility();
+  },
+  { passive: false }
+);
 
 btnPause.addEventListener('mousedown', (e) => {
   e.preventDefault();
