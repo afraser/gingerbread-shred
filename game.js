@@ -105,13 +105,6 @@ const TOUCH_INDICATOR_Y_OFFSET = 80;
 const TOUCH_INDICATOR_SPACING = 30;
 const TOUCH_INDICATOR_VERTICAL_SPACING = 40;
 
-// On-Screen Buttons
-const BUTTON_SIZE = 60;
-const BUTTON_MARGIN = 4;
-const BUTTON_ALPHA = 0.6;
-const BUTTON_PRESSED_ALPHA = 0.9;
-const BUTTON_SPACING = 8;
-
 // Visual Effects
 const BONUS_TEXT_Y_OFFSET = 40;
 const BONUS_TEXT_DURATION_MS = 1000;
@@ -186,15 +179,6 @@ let touch = {
   currentX: 0,
   currentY: 0,
   lastTapTime: 0,
-};
-
-// On-screen buttons (positions calculated dynamically based on canvas size)
-let buttons = {
-  left: { direction: 'left', pressed: false },
-  right: { direction: 'right', pressed: false },
-  up: { direction: 'up', pressed: false },
-  down: { direction: 'down', pressed: false },
-  pause: { direction: 'pause', pressed: false },
 };
 
 // Entities
@@ -368,6 +352,7 @@ function init() {
   gameState = "PLAYING";
   startScreen.style.display = "none";
   uiScore.innerText = "SCORE: 0";
+  updateButtonVisibility();
 
   loop();
 }
@@ -723,6 +708,7 @@ function gameOver() {
         <p class="blink">${getRestartText()}</p>
     `;
   startScreen.style.display = "flex";
+  updateButtonVisibility();
 }
 
 /**
@@ -856,9 +842,6 @@ function draw() {
     }
   });
 
-  // Draw on-screen buttons for mobile
-  drawOnScreenButtons();
-
   ctx.restore();
 }
 
@@ -932,114 +915,6 @@ function drawArrow(x, y, direction) {
 }
 
 // --- ON-SCREEN BUTTONS ---
-
-function getButtonBounds(buttonName) {
-  // Calculate button positions based on canvas size
-  const y = canvas.height - BUTTON_SIZE - BUTTON_MARGIN;
-
-  if (buttonName === 'left') {
-    return {
-      x: BUTTON_MARGIN,
-      y: y,
-      width: BUTTON_SIZE,
-      height: BUTTON_SIZE,
-    };
-  } else if (buttonName === 'right') {
-    return {
-      x: canvas.width - BUTTON_SIZE - BUTTON_MARGIN,
-      y: y,
-      width: BUTTON_SIZE,
-      height: BUTTON_SIZE,
-    };
-  } else if (buttonName === 'up') {
-    const rightButtonX = canvas.width - BUTTON_SIZE - BUTTON_MARGIN;
-    return {
-      x: rightButtonX - BUTTON_SPACING - BUTTON_SIZE,
-      y: y - BUTTON_SIZE - BUTTON_SPACING,
-      width: BUTTON_SIZE,
-      height: BUTTON_SIZE,
-    };
-  } else if (buttonName === 'down') {
-    const rightButtonX = canvas.width - BUTTON_SIZE - BUTTON_MARGIN;
-    return {
-      x: rightButtonX - BUTTON_SPACING - BUTTON_SIZE,
-      y: y,
-      width: BUTTON_SIZE,
-      height: BUTTON_SIZE,
-    };
-  } else if (buttonName === 'pause') {
-    return {
-      x: canvas.width - BUTTON_SIZE - BUTTON_MARGIN,
-      y: BUTTON_MARGIN,
-      width: BUTTON_SIZE,
-      height: BUTTON_SIZE,
-    };
-  }
-}
-
-function drawPauseIcon(x, y) {
-  ctx.fillStyle = C.white;
-  ctx.strokeStyle = C.black;
-  ctx.lineWidth = 2;
-
-  // Draw two vertical bars for pause icon
-  ctx.fillRect(x - 12, y - 15, 8, 30);
-  ctx.strokeRect(x - 12, y - 15, 8, 30);
-  ctx.fillRect(x + 4, y - 15, 8, 30);
-  ctx.strokeRect(x + 4, y - 15, 8, 30);
-}
-
-function drawOnScreenButtons() {
-  if (!isTouchDevice || gameState !== "PLAYING") return;
-
-  ctx.save();
-
-  Object.keys(buttons).forEach(buttonName => {
-    const button = buttons[buttonName];
-    const bounds = getButtonBounds(buttonName);
-
-    // Save context for each button
-    ctx.save();
-
-    // Draw button background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.beginPath();
-    ctx.roundRect(bounds.x, bounds.y, bounds.width, bounds.height, 8);
-    ctx.fill();
-
-    // Draw button border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Draw icon with appropriate alpha based on pressed state
-    ctx.globalAlpha = button.pressed ? BUTTON_PRESSED_ALPHA : BUTTON_ALPHA;
-    const centerX = bounds.x + bounds.width / 2;
-    const centerY = bounds.y + bounds.height / 2;
-
-    if (button.direction === 'pause') {
-      drawPauseIcon(centerX, centerY);
-    } else {
-      drawArrow(centerX, centerY, button.direction);
-    }
-
-    // Restore context after each button
-    ctx.restore();
-  });
-
-  ctx.restore();
-}
-
-function getTouchedButton(x, y) {
-  for (const buttonName of Object.keys(buttons)) {
-    const bounds = getButtonBounds(buttonName);
-    if (x >= bounds.x && x <= bounds.x + bounds.width &&
-        y >= bounds.y && y <= bounds.y + bounds.height) {
-      return buttonName;
-    }
-  }
-  return null;
-}
 
 // --- ART ASSETS (Procedural) ---
 
@@ -1546,6 +1421,7 @@ window.addEventListener("keydown", (e) => {
     if (gameState === "PLAYING") {
       gameState = "PAUSED";
       setPauseScreen();
+      updateButtonVisibility();
     }
   }
 
@@ -1553,6 +1429,7 @@ window.addEventListener("keydown", (e) => {
     if (gameState === "PAUSED") {
       gameState = "PLAYING";
       startScreen.style.display = "none";
+      updateButtonVisibility();
       loop();
     } else if (gameState === "MENU" || gameState === "GAMEOVER") {
       init();
@@ -1585,22 +1462,6 @@ window.addEventListener(
     touch.currentX = coords.x;
     touch.currentY = coords.y;
 
-    // Check if a button was pressed
-    const buttonPressed = getTouchedButton(coords.x, coords.y);
-    if (buttonPressed && gameState === "PLAYING") {
-      // Handle pause button specially
-      if (buttonPressed === 'pause') {
-        gameState = "PAUSED";
-        setPauseScreen();
-        return;
-      }
-
-      // Mark button as pressed and set corresponding key
-      buttons[buttonPressed].pressed = true;
-      keys[buttonPressed] = true;
-      return; // Don't process as tap if button was pressed
-    }
-
     // Detect double-tap for pause (during gameplay only)
     const currentTime = Date.now();
     const tapGap = currentTime - touch.lastTapTime;
@@ -1610,6 +1471,7 @@ window.addEventListener(
       if (gameState === "PLAYING") {
         gameState = "PAUSED";
         setPauseScreen();
+        updateButtonVisibility();
       }
       touch.lastTapTime = 0;
     } else {
@@ -1622,6 +1484,7 @@ window.addEventListener(
       } else if (gameState === "PAUSED") {
         gameState = "PLAYING";
         startScreen.style.display = "none";
+        updateButtonVisibility();
         loop();
       }
     }
@@ -1649,12 +1512,93 @@ window.addEventListener(
   (e) => {
     e.preventDefault();
     touch.active = false;
-
-    // Reset all button presses and keys
-    Object.keys(buttons).forEach(buttonName => {
-      buttons[buttonName].pressed = false;
-      keys[buttonName] = false;
-    });
   },
   { passive: false }
 );
+
+// Mobile control buttons - Function to update button visibility based on game state
+function updateButtonVisibility() {
+  const shouldShow = isTouchDevice && gameState === 'PLAYING';
+  const buttons = [
+    document.getElementById('btn-left'),
+    document.getElementById('btn-right'),
+    document.getElementById('btn-up'),
+    document.getElementById('btn-down'),
+    document.getElementById('btn-pause'),
+  ];
+
+  buttons.forEach(btn => {
+    if (shouldShow) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  });
+}
+
+// Helper function to add event listeners to a direction button
+function addDirectionButtonListeners(button, direction) {
+  // Handle touchstart - press button
+  button.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    button.classList.add('pressed');
+    keys[direction] = true;
+  }, { passive: false });
+
+  // Handle touchend - release button
+  button.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    button.classList.remove('pressed');
+    keys[direction] = false;
+  }, { passive: false });
+
+  // Handle touchcancel - release button if touch is cancelled
+  button.addEventListener('touchcancel', (e) => {
+    e.preventDefault();
+    button.classList.remove('pressed');
+    keys[direction] = false;
+  }, { passive: false });
+
+  // Desktop testing with mouse
+  button.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    button.classList.add('pressed');
+    keys[direction] = true;
+  });
+
+  button.addEventListener('mouseup', (e) => {
+    e.preventDefault();
+    button.classList.remove('pressed');
+    keys[direction] = false;
+  });
+}
+
+// Set up button event listeners
+const btnLeft = document.getElementById('btn-left');
+const btnRight = document.getElementById('btn-right');
+const btnUp = document.getElementById('btn-up');
+const btnDown = document.getElementById('btn-down');
+const btnPause = document.getElementById('btn-pause');
+
+addDirectionButtonListeners(btnLeft, 'left');
+addDirectionButtonListeners(btnRight, 'right');
+addDirectionButtonListeners(btnUp, 'up');
+addDirectionButtonListeners(btnDown, 'down');
+
+// Pause button has special behavior
+btnPause.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  gameState = 'PAUSED';
+  setPauseScreen();
+  updateButtonVisibility();
+}, { passive: false });
+
+btnPause.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  gameState = 'PAUSED';
+  setPauseScreen();
+  updateButtonVisibility();
+});
