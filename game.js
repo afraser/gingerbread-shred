@@ -15,6 +15,8 @@ const gameContainer = document.getElementById("gameContainer");
  * @param {number} points - Points to display
  */
 function showBonus(points) {
+  if (!gameContainer) return; // Guard for test environment
+
   const bonusEl = document.createElement("div");
   bonusEl.className = "bonus-text";
   bonusEl.textContent = `+${points}`;
@@ -358,7 +360,9 @@ function update(deltaTime) {
 
   // Score based on distance traveled downhill
   score += gameSpeed * deltaTime; // Distance-based scoring
-  uiScore.innerText = "SCORE: " + Math.floor(score).toLocaleString();
+  if (uiScore) {
+    uiScore.innerText = "SCORE: " + Math.floor(score).toLocaleString();
+  }
 
   // Process touch input
   if (touch.active) {

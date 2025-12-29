@@ -63,6 +63,13 @@
     <h2>Console Output</h2>
     <div id="console-output"></div>
 
+    <!-- Hidden game elements needed for game.js to load -->
+    <div id="gameContainer" style="display: none;">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">SCORE: 0</div>
+        <div id="startScreen"></div>
+    </div>
+
     <!-- Load game.js first to get access to checkCollision and other functions -->
     <script src="game.js"></script>
 
