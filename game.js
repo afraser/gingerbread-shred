@@ -246,9 +246,12 @@ function setPauseScreen() {
 /**
  * Get touch coordinates relative to canvas
  * @param {TouchEvent} e - Touch event
- * @returns {{x: number, y: number}} Touch coordinates
+ * @returns {{x: number, y: number}|null} Touch coordinates or null if no touches
  */
 function getTouchCoordinates(e) {
+  if (!e.touches || e.touches.length === 0) {
+    return null;
+  }
   const rect = canvas.getBoundingClientRect();
   return {
     x: e.touches[0].clientX - rect.left,
@@ -1348,8 +1351,12 @@ function drawRock(x, y, variant = 1) {
 function loop() {
   if (gameState !== "PLAYING") return;
   const now = performance.now();
-  const deltaTime = (now - lastTime) / 1000; // Convert to seconds
+  let deltaTime = (now - lastTime) / 1000; // Convert to seconds
   lastTime = now;
+
+  // Clamp deltaTime to prevent physics issues from time anomalies
+  // (system time changes, tab suspension, etc.)
+  deltaTime = Math.max(0, Math.min(deltaTime, 0.1)); // Max 100ms per frame
 
   update(deltaTime);
   draw();
@@ -1400,6 +1407,7 @@ window.addEventListener(
   (e) => {
     e.preventDefault();
     const coords = getTouchCoordinates(e);
+    if (!coords) return; // Guard against invalid touch data
 
     touch.active = true;
     touch.startX = coords.x;
@@ -1442,6 +1450,8 @@ window.addEventListener(
     if (!touch.active) return;
 
     const coords = getTouchCoordinates(e);
+    if (!coords) return; // Guard against invalid touch data
+
     touch.currentX = coords.x;
     touch.currentY = coords.y;
   },
