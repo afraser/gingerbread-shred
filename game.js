@@ -1693,7 +1693,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight') keys.right = true;
   if (e.code === 'ArrowDown') keys.down = true;
   if (e.code === 'ArrowUp') keys.up = true;
-  if (e.code === 'Space') player.dz = 6; // JUMP!
+  if (e.code === 'Space' && player.z === 0) player.dz = 6; // JUMP!
   if (e.code === 'Escape') {
     if (gameState === 'PLAYING') {
       gameState = 'PAUSED';
