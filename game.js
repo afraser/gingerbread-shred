@@ -154,6 +154,10 @@ const FLIP_STATE_LAID_FORWARD = 3;
 const FLIP_ROTATION_LAID_BACK = -0.5;
 const FLIP_ROTATION_LAID_FORWARD = 0.5;
 
+// Grind flip cycle: laid-back → upright → laid-forward → upright
+const GRIND_FLIP_CYCLE = [FLIP_STATE_LAID_BACK, FLIP_STATE_UPRIGHT, FLIP_STATE_LAID_FORWARD, FLIP_STATE_UPRIGHT];
+const GRIND_FLIP_COOLDOWN = 0.15; // Seconds between flip changes while grinding
+
 // HP States
 const HP_FULL = 4;
 const HP_NO_ARM = 3;
@@ -355,6 +359,8 @@ function init() {
     grinding: false, // Is player currently grinding a rail?
     grindingRail: null, // Reference to the rail being ground
     grindDistance: 0, // Distance traveled while grinding (for scoring)
+    grindFlipIndex: 0, // Current index in the grind flip cycle
+    grindFlipCooldown: 0, // Cooldown timer for flip changes while grinding
   };
 
   obstacles = [];
@@ -554,6 +560,7 @@ function update(deltaTime) {
       player.grinding = false;
       player.grindingRail = null;
       player.grindDistance = 0;
+      player.flipState = FLIP_STATE_UPRIGHT; // Reset to upright when leaving rail
     } else {
       // Check if still colliding with rail
       const playerBox = {
@@ -601,11 +608,28 @@ function update(deltaTime) {
             showBonus(pointsThisFrame * 10); // Show accumulated bonus
           }
         }
+
+        // Handle grind flip cycling with up/down arrows
+        player.grindFlipCooldown -= deltaTime;
+        if (player.grindFlipCooldown <= 0) {
+          if (keys.up) {
+            // Cycle forward: laid-back → upright → laid-forward → upright
+            player.grindFlipIndex = (player.grindFlipIndex + 1) % GRIND_FLIP_CYCLE.length;
+            player.flipState = GRIND_FLIP_CYCLE[player.grindFlipIndex];
+            player.grindFlipCooldown = GRIND_FLIP_COOLDOWN;
+          } else if (keys.down) {
+            // Cycle backward
+            player.grindFlipIndex = (player.grindFlipIndex - 1 + GRIND_FLIP_CYCLE.length) % GRIND_FLIP_CYCLE.length;
+            player.flipState = GRIND_FLIP_CYCLE[player.grindFlipIndex];
+            player.grindFlipCooldown = GRIND_FLIP_COOLDOWN;
+          }
+        }
       } else {
         // Left the rail - resume normal physics
         player.grinding = false;
         player.grindingRail = null;
         player.grindDistance = 0;
+        player.flipState = FLIP_STATE_UPRIGHT; // Reset to upright when leaving rail
       }
     }
   }
@@ -780,6 +804,9 @@ function update(deltaTime) {
       player.z = RAIL_HEIGHT; // Lock to rail height
       player.dz = 0; // Stop falling
       player.grindDistance = 0; // Reset distance tracker
+      player.grindFlipIndex = 0; // Start at first position in cycle
+      player.grindFlipCooldown = 0; // Reset cooldown
+      player.flipState = GRIND_FLIP_CYCLE[0]; // Start with laid-back
 
       // Accelerate if starting grind with low speed
       if (gameSpeed < 3) {
@@ -800,6 +827,7 @@ function update(deltaTime) {
       player.grinding = false;
       player.grindingRail = null;
       player.grindDistance = 0;
+      player.flipState = FLIP_STATE_UPRIGHT; // Reset to upright when leaving rail
     }
 
     // Cleanup - remove if off top of screen
