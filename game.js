@@ -746,7 +746,7 @@ function gameOver() {
  */
 function getObstacleBottom(obstacle) {
   // Rocks have a smaller visual bottom due to their y-shift
-  if (obstacle.type.startsWith('rock')) {
+  if (obstacle.type.startsWith("rock")) {
     return obstacle.y + 15;
   }
   // Trees and ramps
@@ -1222,9 +1222,9 @@ function drawTree(x, y, variant = 1) {
     // Tree foliage
     ctx.fillStyle = C.green;
     ctx.beginPath();
-    ctx.moveTo(x + 10, y - 25); // Top (higher)
-    ctx.lineTo(x + 23, y + 20); // Bot Right (narrower)
-    ctx.lineTo(x - 3, y + 20); // Bot Left (narrower)
+    ctx.moveTo(x + 10, y - 60); // Top (higher)
+    ctx.lineTo(x + 25, y + 20); // Bot Right (narrower)
+    ctx.lineTo(x - 5, y + 20); // Bot Left (narrower)
     ctx.fill();
     // Trunk
     ctx.fillStyle = C.brown;
@@ -1241,23 +1241,30 @@ function drawTree(x, y, variant = 1) {
 
     // Bottom layer
     ctx.beginPath();
-    ctx.moveTo(x + 15, y + 5);
+    ctx.moveTo(x + 15, y - 5);
     ctx.lineTo(x + 35, y + 20);
     ctx.lineTo(x - 5, y + 20);
     ctx.fill();
 
     // Middle layer
     ctx.beginPath();
-    ctx.moveTo(x + 15, y - 8);
-    ctx.lineTo(x + 30, y + 8);
-    ctx.lineTo(x, y + 8);
+    ctx.moveTo(x + 15, y - 15);
+    ctx.lineTo(x + 32, y + 5);
+    ctx.lineTo(x - 2, y + 6);
+    ctx.fill();
+
+    // Middle layer 2
+    ctx.beginPath();
+    ctx.moveTo(x + 15, y - 25);
+    ctx.lineTo(x + 30, y - 8);
+    ctx.lineTo(x, y - 7);
     ctx.fill();
 
     // Top layer
     ctx.beginPath();
-    ctx.moveTo(x + 15, y - 20);
-    ctx.lineTo(x + 25, y - 5);
-    ctx.lineTo(x + 5, y - 5);
+    ctx.moveTo(x + 15, y - 35);
+    ctx.lineTo(x + 25, y - 20);
+    ctx.lineTo(x + 5, y - 21);
     ctx.fill();
     // Trunk
     ctx.fillStyle = C.brown;
@@ -1272,7 +1279,7 @@ function drawTree(x, y, variant = 1) {
     // Tree foliage
     ctx.fillStyle = C.green;
     ctx.beginPath();
-    ctx.moveTo(x + 15, y - 10); // Top (lower)
+    ctx.moveTo(x + 15, y - 30); // Top (lower)
     ctx.lineTo(x + 38, y + 20); // Bot Right (wider)
     ctx.lineTo(x - 8, y + 20); // Bot Left (wider)
     ctx.fill();
