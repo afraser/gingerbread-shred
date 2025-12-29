@@ -50,7 +50,7 @@ const C = {
 
 // Display & Debug
 const PLAYER_Y = 200; // Fixed screen Y position of player
-const SHOW_HITBOXES = false; // Debug flag to visualize collision boxes
+const SHOW_HITBOXES = true; // Debug flag to visualize collision boxes
 
 // Physics
 const TERMINAL_VELOCITY = 20;
@@ -169,7 +169,14 @@ const OBSTACLE_TYPES = {
   rock2: { w: 30, h: 15 }, // Classic jagged
   rock3: { w: 40, h: 15 }, // Wide flat rock
   ramp: { w: 60, h: 20 },
+  rail: { w: 12, h: 300 }, // Vertical rail running up/down mountain
 };
+
+// Rail/Grinding Constants
+const RAIL_HEIGHT = 15; // Z height of the rail
+const RAIL_GRIND_TOLERANCE = 5; // How close to rail height to initiate grind
+const GRIND_BONUS = 500; // Points awarded per grind interval
+const GRIND_BONUS_INTERVAL = 0.5; // Seconds between bonus awards
 
 // Game State
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
@@ -343,6 +350,9 @@ function init() {
     flipsCompleted: 0, // Count full rotations while airborne
     crashed: false,
     crashTimer: 0,
+    grinding: false, // Is player currently grinding a rail?
+    grindingRail: null, // Reference to the rail being ground
+    grindBonusTimer: 0, // Timer for awarding grind bonuses
   };
 
   obstacles = [];
@@ -530,10 +540,51 @@ function update(deltaTime) {
     player.worldX += player.dx * deltaTime * 60; // Scale movement by deltaTime
   }
 
-  // Jumping
-  player.z += player.dz * deltaTime * 60;
-  player.dz -= GRAVITY * deltaTime * 60; // Gravity
-  player.y -= player.dz * deltaTime * 60; // Make the player "jump"
+  // Grinding physics
+  if (player.grinding && player.grindingRail) {
+    // Check if still colliding with rail
+    const playerBox = {
+      x: player.worldX,
+      y: player.y,
+      w: player.w,
+      h: player.h,
+    };
+    const railDef = OBSTACLE_TYPES.rail;
+    const railBox = {
+      x: player.grindingRail.worldX,
+      y: player.grindingRail.y,
+      w: railDef.w,
+      h: railDef.h,
+    };
+
+    if (checkCollision(playerBox, railBox)) {
+      // Still on rail - maintain grind
+      player.z = RAIL_HEIGHT; // Lock to rail height
+      player.dz = 0; // No falling
+      player.y = PLAYER_Y - RAIL_HEIGHT; // Adjust visual height
+
+      // Award grind bonuses
+      player.grindBonusTimer += deltaTime;
+      if (player.grindBonusTimer >= GRIND_BONUS_INTERVAL) {
+        score += GRIND_BONUS;
+        showBonus(GRIND_BONUS);
+        player.grindBonusTimer = 0;
+      }
+    } else {
+      // Left the rail - resume normal physics
+      player.grinding = false;
+      player.grindingRail = null;
+      player.grindBonusTimer = 0;
+    }
+  }
+
+  // Jumping (normal physics when not grinding)
+  if (!player.grinding) {
+    player.z += player.dz * deltaTime * 60;
+    player.dz -= GRAVITY * deltaTime * 60; // Gravity
+    player.y -= player.dz * deltaTime * 60; // Make the player "jump"
+  }
+
   if (player.z <= 0) {
     player.z = 0;
     player.dz = 0;
@@ -595,9 +646,12 @@ function update(deltaTime) {
       // 25% chance: rock (randomly pick variant)
       const rockVariant = Math.floor(Math.random() * 3) + 1;
       type = `rock${rockVariant}`;
-    } else {
-      // 25% chance: ramp
+    } else if (rand < 0.875) {
+      // 12.5% chance: ramp
       type = 'ramp';
+    } else {
+      // 12.5% chance: rail
+      type = 'rail';
     }
 
     // Spawn in world coordinates around the visible area
@@ -675,10 +729,25 @@ function update(deltaTime) {
           // Reset flip tracking when taking off
           player.flipsCompleted = 0;
           player.lastFlipState = FLIP_STATE_UPRIGHT;
+          o.active = false;
+        } else if (o.type === 'rail') {
+          // Check if player is at the right height to grind
+          if (player.z > 0 && player.z < RAIL_HEIGHT + RAIL_GRIND_TOLERANCE) {
+            // Initiate grinding
+            player.grinding = true;
+            player.grindingRail = o;
+            player.z = RAIL_HEIGHT; // Lock to rail height
+            player.dz = 0; // Stop falling
+            player.grindBonusTimer = 0; // Reset bonus timer
+          } else {
+            // Hit the rail from the wrong angle/height
+            hitPlayer();
+            o.active = false;
+          }
         } else {
           hitPlayer();
+          o.active = false;
         }
-        o.active = false;
       }
     }
 
@@ -782,6 +851,10 @@ function getObstacleBottom(obstacle) {
   if (obstacle.type.startsWith('rock')) {
     return obstacle.y + 15;
   }
+  // Rails run vertically down the mountain
+  if (obstacle.type === 'rail') {
+    return obstacle.y + 300; // Full length of the rail
+  }
   // Trees and ramps
   return obstacle.y + 20;
 }
@@ -836,6 +909,7 @@ function draw() {
       else if (o.type === 'rock2') drawRock(screenX, o.y, 2);
       else if (o.type === 'rock3') drawRock(screenX, o.y, 3);
       else if (o.type === 'ramp') drawRamp(screenX, o.y);
+      else if (o.type === 'rail') drawRail(screenX, o.y);
 
       // Draw hitbox
       if (SHOW_HITBOXES) {
@@ -893,6 +967,7 @@ function draw() {
       else if (o.type === 'rock2') drawRock(screenX, o.y, 2);
       else if (o.type === 'rock3') drawRock(screenX, o.y, 3);
       else if (o.type === 'ramp') drawRamp(screenX, o.y);
+      else if (o.type === 'rail') drawRail(screenX, o.y);
 
       // Draw hitbox
       if (SHOW_HITBOXES) {
@@ -1333,6 +1408,34 @@ function drawRamp(x, y, c = ctx) {
   c.stroke();
 }
 
+function drawRail(x, y, c = ctx) {
+  // Shadow (elongated vertically)
+  c.fillStyle = 'rgba(0,0,0,0.2)';
+  c.beginPath();
+  c.ellipse(x + 10, y + 160, 8, 140, 0, 0, Math.PI * 2);
+  c.fill();
+
+  // Support posts (horizontal, holding up the vertical rail)
+  c.fillStyle = C.grey;
+  c.fillRect(x - 4, y + 50, 20, 4);
+  c.strokeRect(x - 4, y + 50, 20, 4);
+  c.fillRect(x - 4, y + 150, 20, 4);
+  c.strokeRect(x - 4, y + 150, 20, 4);
+  c.fillRect(x - 4, y + 250, 20, 4);
+  c.strokeRect(x - 4, y + 250, 20, 4);
+
+  // Rail bar (vertical, the grindable part)
+  c.fillStyle = '#ffcc00'; // Yellow/gold color
+  c.strokeStyle = C.black;
+  c.lineWidth = 2;
+  c.fillRect(x, y, 6, 300);
+  c.strokeRect(x, y, 6, 300);
+
+  // Shine effect on rail (vertical stripe)
+  c.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  c.fillRect(x, y, 2, 300);
+}
+
 function drawTree(x, y, variant = 1, c = ctx) {
   // Shift entire tree up to include trunk in hitbox
   y -= 10;
@@ -1674,34 +1777,36 @@ function addDirectionButtonListeners(button, direction) {
   });
 }
 
-// Set up button event listeners
+// Set up button event listeners (only if buttons exist - e.g., not on sprites page)
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
 const btnUp = document.getElementById('btn-up');
 const btnDown = document.getElementById('btn-down');
 const btnPause = document.getElementById('btn-pause');
 
-addDirectionButtonListeners(btnLeft, 'left');
-addDirectionButtonListeners(btnRight, 'right');
-addDirectionButtonListeners(btnUp, 'up');
-addDirectionButtonListeners(btnDown, 'down');
+if (btnLeft && btnRight && btnUp && btnDown && btnPause) {
+  addDirectionButtonListeners(btnLeft, 'left');
+  addDirectionButtonListeners(btnRight, 'right');
+  addDirectionButtonListeners(btnUp, 'up');
+  addDirectionButtonListeners(btnDown, 'down');
 
-// Pause button has special behavior
-btnPause.addEventListener(
-  'touchstart',
-  (e) => {
+  // Pause button has special behavior
+  btnPause.addEventListener(
+    'touchstart',
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      gameState = 'PAUSED';
+      setPauseScreen();
+      updateButtonVisibility();
+    },
+    { passive: false }
+  );
+
+  btnPause.addEventListener('mousedown', (e) => {
     e.preventDefault();
-    e.stopPropagation();
     gameState = 'PAUSED';
     setPauseScreen();
     updateButtonVisibility();
-  },
-  { passive: false }
-);
-
-btnPause.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  gameState = 'PAUSED';
-  setPauseScreen();
-  updateButtonVisibility();
-});
+  });
+}

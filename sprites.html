@@ -52,11 +52,42 @@
             font-size: 10px;
             margin-top: 4px;
         }
+        .hitbox-toggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #29adff;
+            z-index: 1000;
+        }
+        .hitbox-toggle label {
+            color: #fff1e8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            margin: 0;
+        }
+        .hitbox-toggle input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
     </style>
 </head>
 <body>
     <h1>GINGERBREAD SHRED - SPRITE REFERENCE</h1>
     <p style="text-align: center; color: #aaa;">Visual reference for all game sprites and variations</p>
+
+    <div class="hitbox-toggle">
+        <label>
+            <input type="checkbox" id="toggleHitboxes">
+            Show Hitboxes
+        </label>
+    </div>
 
     <!-- Hidden game elements needed for game.js to load -->
     <div id="gameContainer" style="display: none;">
@@ -84,12 +115,18 @@
     <h2>Obstacles - Ramps</h2>
     <div class="sprite-grid" id="ramps"></div>
 
+    <h2>Obstacles - Rails</h2>
+    <div class="sprite-grid" id="rails"></div>
+
     <!-- Load game.js first to get access to drawing functions -->
     <script src="game.js"></script>
 
     <script>
+        // Store all sprite canvases for hitbox toggling
+        const allSprites = [];
+
         // Helper function to create a canvas and render a sprite
-        function createSpriteCanvas(width, height, drawFn, label, extraInfo = '') {
+        function createSpriteCanvas(width, height, drawFn, label, extraInfo = '', hitboxData = null) {
             const container = document.createElement('div');
             container.className = 'sprite-item';
 
@@ -113,6 +150,18 @@
 
             spriteCtx.restore();
 
+            // Store sprite data for hitbox toggling
+            if (hitboxData) {
+                allSprites.push({
+                    canvas: spriteCanvas,
+                    ctx: spriteCtx,
+                    drawFn: drawFn,
+                    width: width,
+                    height: height,
+                    hitbox: hitboxData
+                });
+            }
+
             container.appendChild(spriteCanvas);
 
             const labelDiv = document.createElement('div');
@@ -128,6 +177,38 @@
             }
 
             return container;
+        }
+
+        // Function to redraw all sprites with optional hitboxes
+        function redrawSprites(showHitboxes) {
+            allSprites.forEach(sprite => {
+                const ctx = sprite.ctx;
+
+                // Clear canvas
+                ctx.clearRect(0, 0, sprite.width, sprite.height);
+
+                // Redraw sprite
+                ctx.save();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.translate(sprite.width / 2, sprite.height / 2);
+                sprite.drawFn(ctx);
+                ctx.restore();
+
+                // Draw hitbox if enabled
+                if (showHitboxes && sprite.hitbox) {
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(
+                        sprite.width / 2 + sprite.hitbox.x,
+                        sprite.height / 2 + sprite.hitbox.y,
+                        sprite.hitbox.w,
+                        sprite.hitbox.h
+                    );
+                }
+            });
         }
 
         // Render Player Flip States (Full HP = 4)
@@ -167,9 +248,10 @@
         ];
 
         rocks.forEach(rock => {
+            const obstacleType = OBSTACLE_TYPES[`rock${rock.variant}`];
             const sprite = createSpriteCanvas(60, 60, (c) => {
                 drawRock(0, 0, rock.variant, c);
-            }, rock.name);
+            }, rock.name, '', { x: 0, y: -5, w: obstacleType.w, h: obstacleType.h });
             rocksContainer.appendChild(sprite);
         });
 
@@ -182,18 +264,38 @@
         ];
 
         treeVariants.forEach(tree => {
+            const obstacleType = OBSTACLE_TYPES[`tree${tree.variant}`];
             const sprite = createSpriteCanvas(80, 120, (c) => {
                 drawTree(0, 40, tree.variant, c);
-            }, tree.name);
+            }, tree.name, '', { x: 0, y: 30, w: obstacleType.w, h: obstacleType.h });
             treesContainer.appendChild(sprite);
         });
 
         // Render Ramps
         const rampsContainer = document.getElementById('ramps');
+        const rampType = OBSTACLE_TYPES.ramp;
         const rampSprite = createSpriteCanvas(100, 60, (c) => {
             drawRamp(-30, -10, c);
-        }, 'Ramp');
+        }, 'Ramp', '', { x: -30, y: -10, w: rampType.w, h: rampType.h });
         rampsContainer.appendChild(rampSprite);
+
+        // Render Rails
+        const railsContainer = document.getElementById('rails');
+        const railType = OBSTACLE_TYPES.rail;
+        const railSprite = createSpriteCanvas(40, 320, (c) => {
+            drawRail(-14, -10, c);
+        }, `Rail (${railType.h}px)`, '', { x: -14, y: -10, w: railType.w, h: railType.h });
+        railsContainer.appendChild(railSprite);
+
+        // Add checkbox event listener
+        const toggleCheckbox = document.getElementById('toggleHitboxes');
+        if (toggleCheckbox) {
+            toggleCheckbox.addEventListener('change', (e) => {
+                redrawSprites(e.target.checked);
+            });
+        } else {
+            console.error('Toggle hitboxes checkbox not found');
+        }
     </script>
 </body>
 </html>
