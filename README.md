@@ -1,7 +1,7 @@
 # TODO
 
-- [ ] Controls: Add ability to do back/front-flips when airborne.
 - [ ] Mobile: Player and score are cut off at top of screen for some reason.
+- [ ] Mobile: How to flip?
 - [ ] Mobile: Controls too sensitive & unintuitive.
   - Too easy to accelerate too fast by accident.
   - Steering too sensitive.

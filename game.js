@@ -386,7 +386,7 @@ function update(deltaTime) {
   player.z += player.dz * deltaTime * 60;
   player.dz -= 0.4 * deltaTime * 60; // Gravity
   player.y -= player.dz * deltaTime * 60; // Make the player "jump"
-  if (player.z < 0) {
+  if (player.z <= 0) {
     player.z = 0;
     player.dz = 0;
     player.y = PLAYER_Y; // Reset Y position when landing
