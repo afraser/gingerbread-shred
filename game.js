@@ -992,7 +992,7 @@ function drawPlayer(player) {
   ctx.restore();
 }
 
-function drawPlayerUpright(hp) {
+function drawPlayerUpright(hp, c = ctx) {
   if (hp > 0) {
     // HEAD (Always draw unless dead)
     // Position head lower when HP is 1 to sit on snowboard
@@ -1000,373 +1000,373 @@ function drawPlayerUpright(hp) {
     let eyeY = hp === 1 ? 0 : -18;
     let mouthY = hp === 1 ? 8 : -10;
 
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.arc(0, headY, 12, 0, Math.PI * 2); // Head
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.arc(0, headY, 12, 0, Math.PI * 2); // Head
+    c.fill();
+    c.stroke();
 
     // Face
-    ctx.fillStyle = "#fff"; // Eyes
-    ctx.fillRect(-5, eyeY, 4, 4);
-    ctx.fillRect(1, eyeY, 4, 4);
-    ctx.fillStyle = C.red; // Mouth
-    ctx.fillRect(-3, mouthY, 6, 2);
+    c.fillStyle = "#fff"; // Eyes
+    c.fillRect(-5, eyeY, 4, 4);
+    c.fillRect(1, eyeY, 4, 4);
+    c.fillStyle = C.red; // Mouth
+    c.fillRect(-3, mouthY, 6, 2);
   }
 
   // ARMS
   // Left Arm (Draw if HP > 2)
   if (hp > 2) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(-22, -5, 14, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(-22, -5, 14, 8, 4);
+    c.fill();
+    c.stroke();
   }
   // Right Arm (Draw if HP > 3)
   if (hp > 3) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(8, -5, 14, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(8, -5, 14, 8, 4);
+    c.fill();
+    c.stroke();
   }
 
   // TORSO (Draw if HP > 1)
   if (hp > 1) {
-    ctx.fillStyle = C.brown;
+    c.fillStyle = C.brown;
     // Body
-    ctx.fillRect(-10, -5, 20, 20);
-    ctx.strokeRect(-10, -5, 20, 20);
+    c.fillRect(-10, -5, 20, 20);
+    c.strokeRect(-10, -5, 20, 20);
     // Buttons
-    ctx.fillStyle = C.green;
-    ctx.beginPath();
-    ctx.arc(0, 0, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, 8, 3, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = C.green;
+    c.beginPath();
+    c.arc(0, 0, 3, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.arc(0, 8, 3, 0, Math.PI * 2);
+    c.fill();
   }
 }
 
-function drawPlayerLaidBack(hp) {
+function drawPlayerLaidBack(hp, c = ctx) {
   // Player leaning back, body tilted backward
-  ctx.save();
-  ctx.rotate(FLIP_ROTATION_LAID_BACK); // Lean back
+  c.save();
+  c.rotate(FLIP_ROTATION_LAID_BACK); // Lean back
 
   if (hp > 0) {
     // HEAD - positioned above body
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.arc(0, -20, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.arc(0, -20, 12, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
 
     // Face
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(-5, -23, 4, 4);
-    ctx.fillRect(1, -23, 4, 4);
-    ctx.fillStyle = C.red;
-    ctx.fillRect(-3, -15, 6, 2);
+    c.fillStyle = "#fff";
+    c.fillRect(-5, -23, 4, 4);
+    c.fillRect(1, -23, 4, 4);
+    c.fillStyle = C.red;
+    c.fillRect(-3, -15, 6, 2);
   }
 
   // TORSO & LEGS
   if (hp > 1) {
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(-10, -5, 20, 20);
-    ctx.strokeRect(-10, -5, 20, 20);
-    ctx.fillStyle = C.green;
-    ctx.beginPath();
-    ctx.arc(0, 0, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, 8, 3, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = C.brown;
+    c.fillRect(-10, -5, 20, 20);
+    c.strokeRect(-10, -5, 20, 20);
+    c.fillStyle = C.green;
+    c.beginPath();
+    c.arc(0, 0, 3, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.arc(0, 8, 3, 0, Math.PI * 2);
+    c.fill();
   }
 
   // ARMS - extended outward
   if (hp > 2) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(-25, -3, 15, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(-25, -3, 15, 8, 4);
+    c.fill();
+    c.stroke();
   }
   if (hp > 3) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(10, -3, 15, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(10, -3, 15, 8, 4);
+    c.fill();
+    c.stroke();
   }
 
-  ctx.restore();
+  c.restore();
 }
 
-function drawPlayerUpsideDown(hp) {
+function drawPlayerUpsideDown(hp, c = ctx) {
   // Player completely upside down
-  ctx.save();
-  ctx.rotate(Math.PI); // 180 degrees
+  c.save();
+  c.rotate(Math.PI); // 180 degrees
 
   if (hp > 0) {
     // HEAD - now at bottom when rotated
     let headY = hp === 1 ? 3 : -15;
 
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.arc(0, headY, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.arc(0, headY, 12, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
   }
 
   // TORSO & LEGS
   if (hp > 1) {
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(-10, -5, 20, 20);
-    ctx.strokeRect(-10, -5, 20, 20);
-    ctx.fillStyle = C.green;
-    ctx.beginPath();
-    ctx.arc(0, 0, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, 8, 3, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = C.brown;
+    c.fillRect(-10, -5, 20, 20);
+    c.strokeRect(-10, -5, 20, 20);
+    c.fillStyle = C.green;
+    c.beginPath();
+    c.arc(0, 0, 3, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.arc(0, 8, 3, 0, Math.PI * 2);
+    c.fill();
   }
 
   // ARMS
   if (hp > 2) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(-22, -5, 12, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(-22, -5, 12, 8, 4);
+    c.fill();
+    c.stroke();
   }
   if (hp > 3) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(10, -5, 12, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(10, -5, 12, 8, 4);
+    c.fill();
+    c.stroke();
   }
 
-  ctx.restore();
+  c.restore();
 }
 
-function drawPlayerLaidForward(hp) {
+function drawPlayerLaidForward(hp, c = ctx) {
   // Player leaning forward, body tilted forward
-  ctx.save();
-  ctx.rotate(FLIP_ROTATION_LAID_FORWARD); // Lean forward
+  c.save();
+  c.rotate(FLIP_ROTATION_LAID_FORWARD); // Lean forward
 
   if (hp > 0) {
     // HEAD - positioned above body
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.arc(0, -20, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.arc(0, -20, 12, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
 
     // Face
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(-5, -23, 4, 4);
-    ctx.fillRect(1, -23, 4, 4);
-    ctx.fillStyle = C.red;
-    ctx.fillRect(-3, -15, 6, 2);
+    c.fillStyle = "#fff";
+    c.fillRect(-5, -23, 4, 4);
+    c.fillRect(1, -23, 4, 4);
+    c.fillStyle = C.red;
+    c.fillRect(-3, -15, 6, 2);
   }
 
   // TORSO & LEGS
   if (hp > 1) {
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(-10, -5, 20, 20);
-    ctx.strokeRect(-10, -5, 20, 20);
-    ctx.fillStyle = C.green;
-    ctx.beginPath();
-    ctx.arc(0, 0, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, 8, 3, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = C.brown;
+    c.fillRect(-10, -5, 20, 20);
+    c.strokeRect(-10, -5, 20, 20);
+    c.fillStyle = C.green;
+    c.beginPath();
+    c.arc(0, 0, 3, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.arc(0, 8, 3, 0, Math.PI * 2);
+    c.fill();
   }
 
   // ARMS - tucked in forward
   if (hp > 2) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(-25, 0, 15, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(-25, 0, 15, 8, 4);
+    c.fill();
+    c.stroke();
   }
   if (hp > 3) {
-    ctx.fillStyle = C.brown;
-    ctx.beginPath();
-    ctx.roundRect(10, 0, 15, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(10, 0, 15, 8, 4);
+    c.fill();
+    c.stroke();
   }
 
-  ctx.restore();
+  c.restore();
 }
 
-function drawRamp(x, y) {
+function drawRamp(x, y, c = ctx) {
   // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.beginPath();
-  ctx.ellipse(x + 30, y + 22, 25, 8, 0, 0, Math.PI * 2);
-  ctx.fill();
+  c.fillStyle = "rgba(0,0,0,0.2)";
+  c.beginPath();
+  c.ellipse(x + 30, y + 22, 25, 8, 0, 0, Math.PI * 2);
+  c.fill();
 
   // Ramp
-  ctx.fillStyle = C.blue;
-  ctx.beginPath();
-  ctx.moveTo(x + 10, y);
-  ctx.lineTo(x + 50, y);
-  ctx.lineTo(x + 60, y + 20);
-  ctx.lineTo(x, y + 20);
-  ctx.closePath();
-  ctx.fill();
+  c.fillStyle = C.blue;
+  c.beginPath();
+  c.moveTo(x + 10, y);
+  c.lineTo(x + 50, y);
+  c.lineTo(x + 60, y + 20);
+  c.lineTo(x, y + 20);
+  c.closePath();
+  c.fill();
 }
 
-function drawTree(x, y, variant = 1) {
+function drawTree(x, y, variant = 1, c = ctx) {
   // Shift entire tree up to include trunk in hitbox
   y -= 10;
 
   if (variant === 1) {
     // Variant 1: Tall Pine - narrow, tall triangle
     // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath();
-    ctx.ellipse(x + 18, y + 30, 18, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.beginPath();
+    c.ellipse(x + 18, y + 30, 18, 6, 0, 0, Math.PI * 2);
+    c.fill();
     // Tree foliage
-    ctx.fillStyle = C.green;
-    ctx.beginPath();
-    ctx.moveTo(x + 10, y - 60); // Top (higher)
-    ctx.lineTo(x + 25, y + 20); // Bot Right (narrower)
-    ctx.lineTo(x - 5, y + 20); // Bot Left (narrower)
-    ctx.fill();
+    c.fillStyle = C.green;
+    c.beginPath();
+    c.moveTo(x + 10, y - 60); // Top (higher)
+    c.lineTo(x + 25, y + 20); // Bot Right (narrower)
+    c.lineTo(x - 5, y + 20); // Bot Left (narrower)
+    c.fill();
     // Trunk
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(x + 5, y + 20, 10, 10);
+    c.fillStyle = C.brown;
+    c.fillRect(x + 5, y + 20, 10, 10);
   } else if (variant === 2) {
     // Variant 2: Layered Tree - stacked triangles
     // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath();
-    ctx.ellipse(x + 20, y + 30, 20, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.beginPath();
+    c.ellipse(x + 20, y + 30, 20, 6, 0, 0, Math.PI * 2);
+    c.fill();
     // Tree foliage
-    ctx.fillStyle = C.green;
+    c.fillStyle = C.green;
 
     // Bottom layer
-    ctx.beginPath();
-    ctx.moveTo(x + 15, y - 5);
-    ctx.lineTo(x + 35, y + 20);
-    ctx.lineTo(x - 5, y + 20);
-    ctx.fill();
+    c.beginPath();
+    c.moveTo(x + 15, y - 5);
+    c.lineTo(x + 35, y + 20);
+    c.lineTo(x - 5, y + 20);
+    c.fill();
 
     // Middle layer
-    ctx.beginPath();
-    ctx.moveTo(x + 15, y - 15);
-    ctx.lineTo(x + 32, y + 5);
-    ctx.lineTo(x - 2, y + 6);
-    ctx.fill();
+    c.beginPath();
+    c.moveTo(x + 15, y - 15);
+    c.lineTo(x + 32, y + 5);
+    c.lineTo(x - 2, y + 6);
+    c.fill();
 
     // Middle layer 2
-    ctx.beginPath();
-    ctx.moveTo(x + 15, y - 25);
-    ctx.lineTo(x + 30, y - 8);
-    ctx.lineTo(x, y - 7);
-    ctx.fill();
+    c.beginPath();
+    c.moveTo(x + 15, y - 25);
+    c.lineTo(x + 30, y - 8);
+    c.lineTo(x, y - 7);
+    c.fill();
 
     // Top layer
-    ctx.beginPath();
-    ctx.moveTo(x + 15, y - 35);
-    ctx.lineTo(x + 25, y - 20);
-    ctx.lineTo(x + 5, y - 21);
-    ctx.fill();
+    c.beginPath();
+    c.moveTo(x + 15, y - 35);
+    c.lineTo(x + 25, y - 20);
+    c.lineTo(x + 5, y - 21);
+    c.fill();
     // Trunk
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(x + 10, y + 20, 10, 10);
+    c.fillStyle = C.brown;
+    c.fillRect(x + 10, y + 20, 10, 10);
   } else {
     // Variant 3: Bushy Tree - wider, shorter triangle
     // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath();
-    ctx.ellipse(x + 18, y + 30, 25, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.beginPath();
+    c.ellipse(x + 18, y + 30, 25, 6, 0, 0, Math.PI * 2);
+    c.fill();
     // Tree foliage
-    ctx.fillStyle = C.green;
-    ctx.beginPath();
-    ctx.moveTo(x + 15, y - 30); // Top (lower)
-    ctx.lineTo(x + 38, y + 20); // Bot Right (wider)
-    ctx.lineTo(x - 8, y + 20); // Bot Left (wider)
-    ctx.fill();
+    c.fillStyle = C.green;
+    c.beginPath();
+    c.moveTo(x + 15, y - 30); // Top (lower)
+    c.lineTo(x + 38, y + 20); // Bot Right (wider)
+    c.lineTo(x - 8, y + 20); // Bot Left (wider)
+    c.fill();
     // Trunk
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(x + 10, y + 20, 10, 10);
+    c.fillStyle = C.brown;
+    c.fillRect(x + 10, y + 20, 10, 10);
   }
 }
 
-function drawRock(x, y, variant = 1) {
+function drawRock(x, y, variant = 1, c = ctx) {
   // Shift entire tree up
   y = y - 5;
 
   if (variant === 1) {
     // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath();
-    ctx.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.beginPath();
+    c.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
+    c.fill();
 
-    ctx.fillStyle = C.grey;
-    ctx.beginPath();
+    c.fillStyle = C.grey;
+    c.beginPath();
     // Variant 1: Off-center hump - peak shifted left
-    ctx.moveTo(x, y + 20); // Bottom left
-    ctx.lineTo(x + 3, y + 12); // Left side gentle
-    ctx.lineTo(x + 8, y + 7); // Upper left
-    ctx.lineTo(x + 12, y + 5); // Peak (left of center)
-    ctx.lineTo(x + 15, y + 8); // Slope down
-    ctx.lineTo(x + 22, y + 14); // Right side gentle
-    ctx.lineTo(x + 28, y + 16); // Lower right
-    ctx.lineTo(x + 30, y + 20); // Bottom right
+    c.moveTo(x, y + 20); // Bottom left
+    c.lineTo(x + 3, y + 12); // Left side gentle
+    c.lineTo(x + 8, y + 7); // Upper left
+    c.lineTo(x + 12, y + 5); // Peak (left of center)
+    c.lineTo(x + 15, y + 8); // Slope down
+    c.lineTo(x + 22, y + 14); // Right side gentle
+    c.lineTo(x + 28, y + 16); // Lower right
+    c.lineTo(x + 30, y + 20); // Bottom right
   } else if (variant === 2) {
     // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath();
-    ctx.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.beginPath();
+    c.ellipse(x + 15, y + 22, 15, 6, 0, 0, Math.PI * 2);
+    c.fill();
 
-    ctx.fillStyle = C.grey;
-    ctx.beginPath();
+    c.fillStyle = C.grey;
+    c.beginPath();
     // Variant 2: Classic jagged rock
-    ctx.moveTo(x, y + 20); // Bottom left (flat)
-    ctx.lineTo(x + 3, y + 10); // Left side jagged
-    ctx.lineTo(x + 7, y + 5); // Upper left
-    ctx.lineTo(x + 12, y + 2); // Peak left
-    ctx.lineTo(x + 18, y); // Highest peak
-    ctx.lineTo(x + 23, y + 4); // Peak right
-    ctx.lineTo(x + 27, y + 8); // Upper right
-    ctx.lineTo(x + 30, y + 14); // Right side jagged
-    ctx.lineTo(x + 30, y + 20); // Bottom right (flat)
+    c.moveTo(x, y + 20); // Bottom left (flat)
+    c.lineTo(x + 3, y + 10); // Left side jagged
+    c.lineTo(x + 7, y + 5); // Upper left
+    c.lineTo(x + 12, y + 2); // Peak left
+    c.lineTo(x + 18, y); // Highest peak
+    c.lineTo(x + 23, y + 4); // Peak right
+    c.lineTo(x + 27, y + 8); // Upper right
+    c.lineTo(x + 30, y + 14); // Right side jagged
+    c.lineTo(x + 30, y + 20); // Bottom right (flat)
   } else {
     // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    ctx.beginPath();
-    ctx.ellipse(x + 20, y + 22, 20, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
+    c.fillStyle = "rgba(0,0,0,0.2)";
+    c.beginPath();
+    c.ellipse(x + 20, y + 22, 20, 6, 0, 0, Math.PI * 2);
+    c.fill();
 
-    ctx.fillStyle = C.grey;
-    ctx.beginPath();
+    c.fillStyle = C.grey;
+    c.beginPath();
     // Variant 3: Wide flat rock - horizontal emphasis
-    ctx.moveTo(x, y + 20); // Bottom left (wider)
-    ctx.lineTo(x + 5, y + 12); // Left side
-    ctx.lineTo(x + 10, y + 8); // Upper left
-    ctx.lineTo(x + 20, y + 5); // Low peak
-    ctx.lineTo(x + 30, y + 8); // Upper right
-    ctx.lineTo(x + 35, y + 12); // Right side
-    ctx.lineTo(x + 40, y + 20); // Bottom right (wider)
+    c.moveTo(x, y + 20); // Bottom left (wider)
+    c.lineTo(x + 5, y + 12); // Left side
+    c.lineTo(x + 10, y + 8); // Upper left
+    c.lineTo(x + 20, y + 5); // Low peak
+    c.lineTo(x + 30, y + 8); // Upper right
+    c.lineTo(x + 35, y + 12); // Right side
+    c.lineTo(x + 40, y + 20); // Bottom right (wider)
   }
 
-  ctx.closePath();
-  ctx.fill();
+  c.closePath();
+  c.fill();
 }
 
 // --- GAME LOOP ---

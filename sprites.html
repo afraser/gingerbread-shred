@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gingerbread Shred - Sprite Reference</title>
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #ff004d;
+            text-align: center;
+        }
+        h2 {
+            color: #29adff;
+            margin-top: 40px;
+            border-bottom: 2px solid #29adff;
+            padding-bottom: 5px;
+        }
+        .sprite-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .sprite-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .sprite-item canvas {
+            background: #c2c3c7;
+            border-radius: 4px;
+            image-rendering: pixelated;
+            display: block;
+            margin: 10px auto;
+        }
+        .sprite-label {
+            color: #fff1e8;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .hp-indicator {
+            color: #ff004d;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GINGERBREAD SHRED - SPRITE REFERENCE</h1>
+    <p style="text-align: center; color: #aaa;">Visual reference for all game sprites and variations</p>
+
+    <!-- Hidden game elements needed for game.js to load -->
+    <div id="gameContainer" style="display: none;">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">SCORE: 0</div>
+        <div id="startScreen"></div>
+    </div>
+
+    <!-- Player Sprites -->
+    <h2>Player - Flip States (Full HP)</h2>
+    <div class="sprite-grid" id="player-flip-states"></div>
+
+    <h2>Player - HP Variations (Upright)</h2>
+    <div class="sprite-grid" id="player-hp-states"></div>
+
+    <h2>Player - HP Variations (Upside Down)</h2>
+    <div class="sprite-grid" id="player-hp-upside-down"></div>
+
+    <h2>Obstacles - Rocks</h2>
+    <div class="sprite-grid" id="rocks"></div>
+
+    <h2>Obstacles - Trees</h2>
+    <div class="sprite-grid" id="trees"></div>
+
+    <h2>Obstacles - Ramps</h2>
+    <div class="sprite-grid" id="ramps"></div>
+
+    <!-- Load game.js first to get access to drawing functions -->
+    <script src="game.js"></script>
+
+    <script>
+        // Helper function to create a canvas and render a sprite
+        function createSpriteCanvas(width, height, drawFn, label, extraInfo = '') {
+            const container = document.createElement('div');
+            container.className = 'sprite-item';
+
+            const spriteCanvas = document.createElement('canvas');
+            spriteCanvas.width = width;
+            spriteCanvas.height = height;
+            const spriteCtx = spriteCanvas.getContext('2d');
+
+            // Set up context for drawing
+            spriteCtx.strokeStyle = '#000';
+            spriteCtx.lineWidth = 2;
+            spriteCtx.lineCap = 'round';
+            spriteCtx.lineJoin = 'round';
+
+            // Center the sprite
+            spriteCtx.save();
+            spriteCtx.translate(width / 2, height / 2);
+
+            // Call the drawing function with our sprite context
+            drawFn(spriteCtx);
+
+            spriteCtx.restore();
+
+            container.appendChild(spriteCanvas);
+
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'sprite-label';
+            labelDiv.textContent = label;
+            container.appendChild(labelDiv);
+
+            if (extraInfo) {
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'hp-indicator';
+                infoDiv.textContent = extraInfo;
+                container.appendChild(infoDiv);
+            }
+
+            return container;
+        }
+
+        // Render Player Flip States (Full HP = 4)
+        const flipStatesContainer = document.getElementById('player-flip-states');
+        const flipStates = [
+            { name: 'Upright', fn: (c) => drawPlayerUpright(4, c) },
+            { name: 'Laid Back', fn: (c) => drawPlayerLaidBack(4, c) },
+            { name: 'Upside Down', fn: (c) => drawPlayerUpsideDown(4, c) },
+            { name: 'Laid Forward', fn: (c) => drawPlayerLaidForward(4, c) }
+        ];
+
+        flipStates.forEach(state => {
+            const sprite = createSpriteCanvas(80, 80, state.fn, state.name, 'HP: 4/4');
+            flipStatesContainer.appendChild(sprite);
+        });
+
+        // Render Player HP Variations (Upright)
+        const hpStatesContainer = document.getElementById('player-hp-states');
+        for (let hp = 4; hp >= 0; hp--) {
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerUpright(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpStatesContainer.appendChild(sprite);
+        }
+
+        // Render Player HP Variations (Upside Down)
+        const hpUpsideDownContainer = document.getElementById('player-hp-upside-down');
+        for (let hp = 4; hp >= 0; hp--) {
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerUpsideDown(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpUpsideDownContainer.appendChild(sprite);
+        }
+
+        // Render Rocks
+        const rocksContainer = document.getElementById('rocks');
+        const rocks = [
+            { name: 'Small Rock', variant: 1 },
+            { name: 'Medium Rock', variant: 2 },
+            { name: 'Large Rock', variant: 3 }
+        ];
+
+        rocks.forEach(rock => {
+            const sprite = createSpriteCanvas(60, 60, (c) => {
+                drawRock(0, 0, rock.variant, c);
+            }, rock.name);
+            rocksContainer.appendChild(sprite);
+        });
+
+        // Render Trees
+        const treesContainer = document.getElementById('trees');
+        const treeVariants = [
+            { name: 'Tall Pine', variant: 1 },
+            { name: 'Layered Tree', variant: 2 },
+            { name: 'Bushy Tree', variant: 3 }
+        ];
+
+        treeVariants.forEach(tree => {
+            const sprite = createSpriteCanvas(80, 120, (c) => {
+                drawTree(0, 40, tree.variant, c);
+            }, tree.name);
+            treesContainer.appendChild(sprite);
+        });
+
+        // Render Ramps
+        const rampsContainer = document.getElementById('ramps');
+        const rampSprite = createSpriteCanvas(100, 60, (c) => {
+            drawRamp(-30, -10, c);
+        }, 'Ramp');
+        rampsContainer.appendChild(rampSprite);
+    </script>
+</body>
+</html>
