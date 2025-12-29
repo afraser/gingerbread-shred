@@ -131,6 +131,14 @@ const BRAKE_PARTICLE_Y_OFFSET = 20;
 const BRAKE_PARTICLE_DY = -2.5;
 const BRAKE_PARTICLE_MIN_SIZE = 3;
 const BRAKE_PARTICLE_MAX_SIZE = 3;
+
+// Movement Particles (turning & accelerating)
+const MOVEMENT_PARTICLE_COUNT = 2;
+const MOVEMENT_PARTICLE_MIN_LIFE = 15;
+const MOVEMENT_PARTICLE_MAX_LIFE = 10;
+const MOVEMENT_PARTICLE_MIN_SIZE = 2;
+const MOVEMENT_PARTICLE_MAX_SIZE = 2;
+const MIN_MOVEMENT_PARTICLE_SPEED = 3; // Only spawn particles above this speed
 const CRUMB_COUNT = 5;
 const CHUNK_SIZE = 15;
 const CHUNK_LIFETIME = 100;
@@ -434,6 +442,57 @@ function update(deltaTime) {
     }
   }
 
+  // Movement particles (turning and accelerating)
+  if (player.z === 0 && gameSpeed > MIN_MOVEMENT_PARTICLE_SPEED) {
+    // Turning left - particles spray out the right side
+    if (keys.left && Math.random() < 0.3) {
+      for (let i = 0; i < MOVEMENT_PARTICLE_COUNT; i++) {
+        particles.push({
+          worldX: player.worldX + PLAYER_WIDTH, // Right side of board
+          y: player.y + 10 + Math.random() * 10,
+          dx: gameSpeed * 0.3 + Math.random() * 2, // Spray to the right, faster with speed
+          dy: -1 - Math.random() * 2,
+          w:
+            MOVEMENT_PARTICLE_MIN_SIZE +
+            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
+          h:
+            MOVEMENT_PARTICLE_MIN_SIZE +
+            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
+          color: '#fff',
+          rot: 0,
+          rSpeed: 0,
+          life:
+            MOVEMENT_PARTICLE_MIN_LIFE +
+            Math.random() * MOVEMENT_PARTICLE_MAX_LIFE,
+        });
+      }
+    }
+
+    // Turning right - particles spray out the left side
+    if (keys.right && Math.random() < 0.3) {
+      for (let i = 0; i < MOVEMENT_PARTICLE_COUNT; i++) {
+        particles.push({
+          worldX: player.worldX, // Left side of board
+          y: player.y + 10 + Math.random() * 10,
+          dx: -gameSpeed * 0.3 - Math.random() * 2, // Spray to the left, faster with speed
+          dy: -1 - Math.random() * 2,
+          w:
+            MOVEMENT_PARTICLE_MIN_SIZE +
+            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
+          h:
+            MOVEMENT_PARTICLE_MIN_SIZE +
+            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
+          color: '#fff',
+          rot: 0,
+          rSpeed: 0,
+          life:
+            MOVEMENT_PARTICLE_MIN_LIFE +
+            Math.random() * MOVEMENT_PARTICLE_MAX_LIFE,
+        });
+      }
+    }
+  }
+
   // Scoot mode: when speed is very low, allow direct left/right movement
   const isScootMode = gameSpeed < SCOOT_THRESHOLD;
 
@@ -626,7 +685,7 @@ function update(deltaTime) {
     if (o.y < OBSTACLE_CLEANUP_Y) obstacles.splice(i, 1);
   }
 
-  // --- Update Particles (Limbs/Crumbs) ---
+  // --- Update Particles (Limbs/Crumbs/Snow) ---
   for (let i = particles.length - 1; i >= 0; i--) {
     let p = particles[i];
     p.worldX += p.dx;
