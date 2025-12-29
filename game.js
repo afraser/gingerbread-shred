@@ -173,7 +173,7 @@ const OBSTACLE_TYPES = {
 };
 
 // Rail/Grinding Constants
-const RAIL_HEIGHT = 4; // Z height of the rail
+const RAIL_HEIGHT = 6; // Z height of the rail
 const RAIL_GRIND_TOLERANCE = 0.5; // How close to rail height to initiate grind
 const GRIND_START_MULTIPLIER = 10; // Velocity multiplier for starting a grind
 const GRIND_START_EXPONENT = 3; // Exponent for grind starting bonus
@@ -1663,9 +1663,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight') keys.right = true;
   if (e.code === 'ArrowDown') keys.down = true;
   if (e.code === 'ArrowUp') keys.up = true;
-  if (e.code === 'Space') {
-    player.dz = 6;
-  }
+  if (e.code === 'Space') player.dz = 6; // JUMP!
   if (e.code === 'Escape') {
     if (gameState === 'PLAYING') {
       gameState = 'PAUSED';
