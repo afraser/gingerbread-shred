@@ -59,8 +59,11 @@
             background: rgba(0, 0, 0, 0.8);
             padding: 10px 15px;
             border-radius: 5px;
-            border: 1px solid #29adff;
             z-index: 1000;
+
+        }
+        .hitbox-toggle:focus-within {
+            border-color: #29adff;
         }
         .hitbox-toggle label {
             color: #fff1e8;
@@ -241,35 +244,51 @@
 
         // Render Rocks
         const rocksContainer = document.getElementById('rocks');
-        const rocks = [
-            { name: 'Small Rock', variant: 1 },
-            { name: 'Medium Rock', variant: 2 },
-            { name: 'Large Rock', variant: 3 }
-        ];
 
-        rocks.forEach(rock => {
-            const obstacleType = OBSTACLE_TYPES[`rock${rock.variant}`];
-            const sprite = createSpriteCanvas(60, 60, (c) => {
-                drawRock(0, 0, rock.variant, c);
-            }, rock.name, '', { x: 0, y: -5, w: obstacleType.w, h: obstacleType.h });
-            rocksContainer.appendChild(sprite);
-        });
+        // Rock variant 1 (30px wide)
+        const rock1Type = OBSTACLE_TYPES.rock1;
+        const rock1Sprite = createSpriteCanvas(60, 60, (c) => {
+            drawRock(-15, -7, 1, c);
+        }, 'Small Rock', '', { x: -15, y: -7, w: rock1Type.w, h: rock1Type.h });
+        rocksContainer.appendChild(rock1Sprite);
+
+        // Rock variant 2 (30px wide)
+        const rock2Type = OBSTACLE_TYPES.rock2;
+        const rock2Sprite = createSpriteCanvas(60, 60, (c) => {
+            drawRock(-15, -7, 2, c);
+        }, 'Medium Rock', '', { x: -15, y: -7, w: rock2Type.w, h: rock2Type.h });
+        rocksContainer.appendChild(rock2Sprite);
+
+        // Rock variant 3 (40px wide - needs different offset)
+        const rock3Type = OBSTACLE_TYPES.rock3;
+        const rock3Sprite = createSpriteCanvas(60, 60, (c) => {
+            drawRock(-20, -7, 3, c);
+        }, 'Large Rock', '', { x: -20, y: -7, w: rock3Type.w, h: rock3Type.h });
+        rocksContainer.appendChild(rock3Sprite);
 
         // Render Trees
         const treesContainer = document.getElementById('trees');
-        const treeVariants = [
-            { name: 'Tall Pine', variant: 1 },
-            { name: 'Layered Tree', variant: 2 },
-            { name: 'Bushy Tree', variant: 3 }
-        ];
 
-        treeVariants.forEach(tree => {
-            const obstacleType = OBSTACLE_TYPES[`tree${tree.variant}`];
-            const sprite = createSpriteCanvas(80, 120, (c) => {
-                drawTree(0, 40, tree.variant, c);
-            }, tree.name, '', { x: 0, y: 30, w: obstacleType.w, h: obstacleType.h });
-            treesContainer.appendChild(sprite);
-        });
+        // Tree variant 1 (30px wide, centered at x+10)
+        const tree1Type = OBSTACLE_TYPES.tree1;
+        const tree1Sprite = createSpriteCanvas(80, 120, (c) => {
+            drawTree(-10, 25, 1, c);
+        }, 'Tall Pine', '', { x: -10, y: 25, w: tree1Type.w, h: tree1Type.h });
+        treesContainer.appendChild(tree1Sprite);
+
+        // Tree variant 2 (40px wide, centered at x+15)
+        const tree2Type = OBSTACLE_TYPES.tree2;
+        const tree2Sprite = createSpriteCanvas(80, 120, (c) => {
+            drawTree(-15, 25, 2, c);
+        }, 'Layered Tree', '', { x: -15, y: 25, w: tree2Type.w, h: tree2Type.h });
+        treesContainer.appendChild(tree2Sprite);
+
+        // Tree variant 3 (46px wide, centered at x+15)
+        const tree3Type = OBSTACLE_TYPES.tree3;
+        const tree3Sprite = createSpriteCanvas(80, 120, (c) => {
+            drawTree(-15, 25, 3, c);
+        }, 'Bushy Tree', '', { x: -15, y: 25, w: tree3Type.w, h: tree3Type.h });
+        treesContainer.appendChild(tree3Sprite);
 
         // Render Ramps
         const rampsContainer = document.getElementById('ramps');
@@ -282,9 +301,9 @@
         // Render Rails
         const railsContainer = document.getElementById('rails');
         const railType = OBSTACLE_TYPES.rail;
-        const railSprite = createSpriteCanvas(40, 320, (c) => {
-            drawRail(-14, -10, c);
-        }, `Rail (${railType.h}px)`, '', { x: -14, y: -10, w: railType.w, h: railType.h });
+        const railSprite = createSpriteCanvas(50, 340, (c) => {
+            drawRail(-3, -150, c);
+        }, `Rail (${railType.h}px)`, '', { x: -3, y: -150, w: railType.w, h: railType.h });
         railsContainer.appendChild(railSprite);
 
         // Add checkbox event listener

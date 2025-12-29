@@ -168,7 +168,7 @@ const OBSTACLE_TYPES = {
   rock1: { w: 30, h: 15 }, // Off-center hump
   rock2: { w: 30, h: 15 }, // Classic jagged
   rock3: { w: 40, h: 15 }, // Wide flat rock
-  ramp: { w: 60, h: 20 },
+  ramp: { w: 60, h: 20 }, // Jump ramp
   rail: { w: 12, h: 300 }, // Vertical rail running up/down mountain
 };
 
