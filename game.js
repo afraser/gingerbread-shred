@@ -998,6 +998,9 @@ function drawOnScreenButtons() {
     const button = buttons[buttonName];
     const bounds = getButtonBounds(buttonName);
 
+    // Save context for each button
+    ctx.save();
+
     // Draw button background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.beginPath();
@@ -1019,6 +1022,9 @@ function drawOnScreenButtons() {
     } else {
       drawArrow(centerX, centerY, button.direction);
     }
+
+    // Restore context after each button
+    ctx.restore();
   });
 
   ctx.restore();
