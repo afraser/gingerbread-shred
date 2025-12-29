@@ -1014,7 +1014,25 @@ function drawPlayerUpright(hp) {
     ctx.fillRect(-3, mouthY, 6, 2);
   }
 
-  // TORSO & LEGS (Draw if HP > 1)
+  // ARMS
+  // Left Arm (Draw if HP > 2)
+  if (hp > 2) {
+    ctx.fillStyle = C.brown;
+    ctx.beginPath();
+    ctx.roundRect(-22, -5, 14, 8, 4);
+    ctx.fill();
+    ctx.stroke();
+  }
+  // Right Arm (Draw if HP > 3)
+  if (hp > 3) {
+    ctx.fillStyle = C.brown;
+    ctx.beginPath();
+    ctx.roundRect(8, -5, 14, 8, 4);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // TORSO (Draw if HP > 1)
   if (hp > 1) {
     ctx.fillStyle = C.brown;
     // Body
@@ -1028,20 +1046,6 @@ function drawPlayerUpright(hp) {
     ctx.beginPath();
     ctx.arc(0, 8, 3, 0, Math.PI * 2);
     ctx.fill();
-  }
-
-  // ARMS
-  // Left Arm (Draw if HP > 2)
-  if (hp > 2) {
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(-22, -5, 12, 8);
-    ctx.strokeRect(-22, -5, 12, 8);
-  }
-  // Right Arm (Draw if HP > 3)
-  if (hp > 3) {
-    ctx.fillStyle = C.brown;
-    ctx.fillRect(10, -5, 12, 8);
-    ctx.strokeRect(10, -5, 12, 8);
   }
 }
 
@@ -1083,13 +1087,17 @@ function drawPlayerLaidBack(hp) {
   // ARMS - extended outward
   if (hp > 2) {
     ctx.fillStyle = C.brown;
-    ctx.fillRect(-25, -3, 15, 8);
-    ctx.strokeRect(-25, -3, 15, 8);
+    ctx.beginPath();
+    ctx.roundRect(-25, -3, 15, 8, 4);
+    ctx.fill();
+    ctx.stroke();
   }
   if (hp > 3) {
     ctx.fillStyle = C.brown;
-    ctx.fillRect(10, -3, 15, 8);
-    ctx.strokeRect(10, -3, 15, 8);
+    ctx.beginPath();
+    ctx.roundRect(10, -3, 15, 8, 4);
+    ctx.fill();
+    ctx.stroke();
   }
 
   ctx.restore();
@@ -1128,13 +1136,17 @@ function drawPlayerUpsideDown(hp) {
   // ARMS
   if (hp > 2) {
     ctx.fillStyle = C.brown;
-    ctx.fillRect(-22, -5, 12, 8);
-    ctx.strokeRect(-22, -5, 12, 8);
+    ctx.beginPath();
+    ctx.roundRect(-22, -5, 12, 8, 4);
+    ctx.fill();
+    ctx.stroke();
   }
   if (hp > 3) {
     ctx.fillStyle = C.brown;
-    ctx.fillRect(10, -5, 12, 8);
-    ctx.strokeRect(10, -5, 12, 8);
+    ctx.beginPath();
+    ctx.roundRect(10, -5, 12, 8, 4);
+    ctx.fill();
+    ctx.stroke();
   }
 
   ctx.restore();
@@ -1178,13 +1190,17 @@ function drawPlayerLaidForward(hp) {
   // ARMS - tucked in forward
   if (hp > 2) {
     ctx.fillStyle = C.brown;
-    ctx.fillRect(-25, 0, 15, 8);
-    ctx.strokeRect(-25, 0, 15, 8);
+    ctx.beginPath();
+    ctx.roundRect(-25, 0, 15, 8, 4);
+    ctx.fill();
+    ctx.stroke();
   }
   if (hp > 3) {
     ctx.fillStyle = C.brown;
-    ctx.fillRect(10, 0, 15, 8);
-    ctx.strokeRect(10, 0, 15, 8);
+    ctx.beginPath();
+    ctx.roundRect(10, 0, 15, 8, 4);
+    ctx.fill();
+    ctx.stroke();
   }
 
   ctx.restore();
