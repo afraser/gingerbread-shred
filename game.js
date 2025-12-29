@@ -61,6 +61,7 @@ const PLAYER_ROTATION_FACTOR = 0.3;
 
 // Movement
 const ACCELERATION_RATE = 0.05;
+const ACCELERATION_Z_THRESHOLD = 2; // Disable acceleration when above this Z height. We use a small number here to allow accelerating out of a bunny hop.
 const BRAKE_RATE = 0.15;
 const STEERING_RATE = 0.06;
 const LATERAL_VELOCITY_MULTIPLIER = 1.5;
@@ -409,8 +410,8 @@ function update(deltaTime) {
     player.lastFlipState = player.flipState;
   }
 
-  // Acceleration (disabled when crashed)
-  if (keys.down && player.z === 0 && !player.crashed) {
+  // Acceleration (disabled when crashed or in air)
+  if (keys.down && player.z < ACCELERATION_Z_THRESHOLD && !player.crashed) {
     gameSpeed = Math.min(
       TERMINAL_VELOCITY,
       gameSpeed + ACCELERATION_RATE * deltaTime * 60
@@ -1310,6 +1311,26 @@ function drawRamp(x, y, c = ctx) {
   c.lineTo(x, y + 20);
   c.closePath();
   c.fill();
+
+  // Double up-chevron icon to indicate jump
+  c.strokeStyle = '#1a5f8f'; // Darker blue
+  c.lineWidth = 2;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+
+  // First chevron (bottom)
+  c.beginPath();
+  c.moveTo(x + 23, y + 15);
+  c.lineTo(x + 30, y + 10);
+  c.lineTo(x + 37, y + 15);
+  c.stroke();
+
+  // Second chevron (top)
+  c.beginPath();
+  c.moveTo(x + 23, y + 10);
+  c.lineTo(x + 30, y + 5);
+  c.lineTo(x + 37, y + 10);
+  c.stroke();
 }
 
 function drawTree(x, y, variant = 1, c = ctx) {
