@@ -50,7 +50,7 @@ const C = {
 
 // Display & Debug
 const PLAYER_Y = 200; // Fixed screen Y position of player
-const SHOW_HITBOXES = true; // Debug flag to visualize collision boxes
+const SHOW_HITBOXES = false; // Debug flag to visualize collision boxes
 
 // Physics
 const TERMINAL_VELOCITY = 20;
@@ -173,10 +173,12 @@ const OBSTACLE_TYPES = {
 };
 
 // Rail/Grinding Constants
-const RAIL_HEIGHT = 15; // Z height of the rail
-const RAIL_GRIND_TOLERANCE = 5; // How close to rail height to initiate grind
-const GRIND_BONUS = 500; // Points awarded per grind interval
-const GRIND_BONUS_INTERVAL = 0.5; // Seconds between bonus awards
+const RAIL_HEIGHT = 4; // Z height of the rail
+const RAIL_GRIND_TOLERANCE = 0.5; // How close to rail height to initiate grind
+const GRIND_START_MULTIPLIER = 10; // Velocity multiplier for starting a grind
+const GRIND_START_EXPONENT = 3; // Exponent for grind starting bonus
+const GRIND_POINTS_PER_DISTANCE = 2; // Base points per pixel traveled
+const GRIND_SPEED_MULTIPLIER = 5; // Multiplier for gameSpeed bonus
 
 // Game State
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
@@ -352,7 +354,7 @@ function init() {
     crashTimer: 0,
     grinding: false, // Is player currently grinding a rail?
     grindingRail: null, // Reference to the rail being ground
-    grindBonusTimer: 0, // Timer for awarding grind bonuses
+    grindDistance: 0, // Distance traveled while grinding (for scoring)
   };
 
   obstacles = [];
@@ -542,39 +544,69 @@ function update(deltaTime) {
 
   // Grinding physics
   if (player.grinding && player.grindingRail) {
-    // Check if still colliding with rail
-    const playerBox = {
-      x: player.worldX,
-      y: player.y,
-      w: player.w,
-      h: player.h,
-    };
     const railDef = OBSTACLE_TYPES.rail;
-    const railBox = {
-      x: player.grindingRail.worldX,
-      y: player.grindingRail.y,
-      w: railDef.w,
-      h: railDef.h,
-    };
 
-    if (checkCollision(playerBox, railBox)) {
-      // Still on rail - maintain grind
-      player.z = RAIL_HEIGHT; // Lock to rail height
-      player.dz = 0; // No falling
-      player.y = PLAYER_Y - RAIL_HEIGHT; // Adjust visual height
-
-      // Award grind bonuses
-      player.grindBonusTimer += deltaTime;
-      if (player.grindBonusTimer >= GRIND_BONUS_INTERVAL) {
-        score += GRIND_BONUS;
-        showBonus(GRIND_BONUS);
-        player.grindBonusTimer = 0;
-      }
-    } else {
-      // Left the rail - resume normal physics
+    // End grind if rail has moved off screen
+    if (
+      player.grindingRail.y + railDef.h < 0 ||
+      player.grindingRail.y > canvas.height
+    ) {
       player.grinding = false;
       player.grindingRail = null;
-      player.grindBonusTimer = 0;
+      player.grindDistance = 0;
+    } else {
+      // Check if still colliding with rail
+      const playerBox = {
+        x: player.worldX,
+        y: player.y,
+        w: player.w,
+        h: player.h,
+      };
+      const railBox = {
+        x: player.grindingRail.worldX,
+        y: player.grindingRail.y,
+        w: railDef.w,
+        h: railDef.h,
+      };
+
+      if (checkCollision(playerBox, railBox)) {
+        // Still on rail - maintain grind
+        player.z = RAIL_HEIGHT; // Lock to rail height
+        player.dz = 0; // No falling
+        player.y = PLAYER_Y - RAIL_HEIGHT; // Adjust visual height
+
+        // Award points based on distance traveled and speed
+        // Track both lateral movement and downward travel along the rail
+        const lateralDistance = Math.abs(player.dx * deltaTime * 60);
+        const downwardDistance = gameSpeed * deltaTime * 60;
+        const totalDistance = Math.sqrt(
+          lateralDistance * lateralDistance +
+            downwardDistance * downwardDistance
+        );
+
+        const speedBonus = gameSpeed * GRIND_SPEED_MULTIPLIER;
+        const pointsThisFrame = Math.floor(
+          totalDistance * (GRIND_POINTS_PER_DISTANCE + speedBonus)
+        );
+
+        if (pointsThisFrame > 0) {
+          score += pointsThisFrame;
+          player.grindDistance += totalDistance;
+
+          // Show bonus every 50 pixels traveled
+          if (
+            Math.floor(player.grindDistance / 50) >
+            Math.floor((player.grindDistance - totalDistance) / 50)
+          ) {
+            showBonus(pointsThisFrame * 10); // Show accumulated bonus
+          }
+        }
+      } else {
+        // Left the rail - resume normal physics
+        player.grinding = false;
+        player.grindingRail = null;
+        player.grindDistance = 0;
+      }
     }
   }
 
@@ -703,23 +735,23 @@ function update(deltaTime) {
     let o = obstacles[i];
     o.y -= gameSpeed; // Move UP (simulating downhill)
 
+    // Simple box collision using world coordinates
+    const obstacleDef = OBSTACLE_TYPES[o.type];
+    const playerBox = {
+      x: player.worldX,
+      y: player.y,
+      w: player.w,
+      h: player.h,
+    };
+    const obstacleBox = {
+      x: o.worldX,
+      y: o.y,
+      w: obstacleDef.w,
+      h: obstacleDef.h,
+    };
+
     // Collision (in world space)
     if (o.active && player.invul === 0 && player.z === 0) {
-      // Simple box collision using world coordinates
-      const obstacleDef = OBSTACLE_TYPES[o.type];
-      const playerBox = {
-        x: player.worldX,
-        y: player.y,
-        w: player.w,
-        h: player.h,
-      };
-      const obstacleBox = {
-        x: o.worldX,
-        y: o.y,
-        w: obstacleDef.w,
-        h: obstacleDef.h,
-      };
-
       if (checkCollision(playerBox, obstacleBox)) {
         if (o.type === 'ramp') {
           player.dz = gameSpeed * JUMP_BOOST_MULTIPLIER + JUMP_BOOST_BASE; // Jump boost
@@ -730,29 +762,51 @@ function update(deltaTime) {
           player.flipsCompleted = 0;
           player.lastFlipState = FLIP_STATE_UPRIGHT;
           o.active = false;
-        } else if (o.type === 'rail') {
-          // Check if player is at the right height to grind
-          if (player.z > 0 && player.z < RAIL_HEIGHT + RAIL_GRIND_TOLERANCE) {
-            // Initiate grinding
-            player.grinding = true;
-            player.grindingRail = o;
-            player.z = RAIL_HEIGHT; // Lock to rail height
-            player.dz = 0; // Stop falling
-            player.grindBonusTimer = 0; // Reset bonus timer
-          } else {
-            // Hit the rail from the wrong angle/height
-            hitPlayer();
-            o.active = false;
-          }
         } else {
           hitPlayer();
           o.active = false;
         }
       }
+    } else if (
+      !player.grinding &&
+      player.z > 0 &&
+      player.z < RAIL_HEIGHT + RAIL_GRIND_TOLERANCE &&
+      o.type === 'rail' &&
+      checkCollision(playerBox, obstacleBox)
+    ) {
+      // start grind
+      player.grinding = true;
+      player.grindingRail = o;
+      player.z = RAIL_HEIGHT; // Lock to rail height
+      player.dz = 0; // Stop falling
+      player.grindDistance = 0; // Reset distance tracker
+
+      // Accelerate if starting grind with low speed
+      if (gameSpeed < 3) {
+        gameSpeed = 3;
+      }
+
+      const grindStartBonus = Math.floor(
+        GRIND_START_MULTIPLIER * gameSpeed ** GRIND_START_EXPONENT
+      );
+      score += grindStartBonus;
+      showBonus(grindStartBonus);
+    } else if (
+      player.grinding &&
+      player.grindingRail === o &&
+      !checkCollision(playerBox, obstacleBox)
+    ) {
+      // end grind if we leave THIS rail (the one we're grinding)
+      player.grinding = false;
+      player.grindingRail = null;
+      player.grindDistance = 0;
     }
 
     // Cleanup - remove if off top of screen
-    if (o.y < OBSTACLE_CLEANUP_Y) obstacles.splice(i, 1);
+    // For rails, need to account for their full height (300px)
+    const cleanupThreshold =
+      o.type === 'rail' ? -OBSTACLE_TYPES.rail.h : OBSTACLE_CLEANUP_Y;
+    if (o.y < cleanupThreshold) obstacles.splice(i, 1);
   }
 
   // --- Update Particles (Limbs/Crumbs/Snow) ---
@@ -891,10 +945,12 @@ function draw() {
   // Player visual bottom for depth sorting
   const playerBottom = player.y + 15;
 
-  // Draw Obstacles BEHIND player (visual bottom <= player bottom)
+  // Draw Obstacles BEHIND player (visual bottom <= player bottom, or rails which are always behind)
   obstacles.forEach((o) => {
     const obstacleBottom = getObstacleBottom(o);
-    if (obstacleBottom > playerBottom) return; // Skip, will draw later
+    // Rails are always drawn behind the player (player grinds on top)
+    const isRail = o.type === 'rail';
+    if (!isRail && obstacleBottom > playerBottom) return; // Skip, will draw later
 
     // Convert world X to screen X using camera offset
     let screenX = o.worldX - cameraX + canvas.width / 2;
@@ -949,10 +1005,11 @@ function draw() {
     }
   }
 
-  // Draw Obstacles IN FRONT of player (visual bottom > player bottom)
+  // Draw Obstacles IN FRONT of player (visual bottom > player bottom, excluding rails)
   obstacles.forEach((o) => {
     const obstacleBottom = getObstacleBottom(o);
-    if (obstacleBottom <= playerBottom) return; // Already drawn
+    // Rails are always drawn in the behind pass
+    if (o.type === 'rail' || obstacleBottom <= playerBottom) return; // Already drawn
 
     // Convert world X to screen X using camera offset
     let screenX = o.worldX - cameraX + canvas.width / 2;
@@ -967,7 +1024,6 @@ function draw() {
       else if (o.type === 'rock2') drawRock(screenX, o.y, 2);
       else if (o.type === 'rock3') drawRock(screenX, o.y, 3);
       else if (o.type === 'ramp') drawRamp(screenX, o.y);
-      else if (o.type === 'rail') drawRail(screenX, o.y);
 
       // Draw hitbox
       if (SHOW_HITBOXES) {
@@ -1607,6 +1663,9 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight') keys.right = true;
   if (e.code === 'ArrowDown') keys.down = true;
   if (e.code === 'ArrowUp') keys.up = true;
+  if (e.code === 'Space') {
+    player.dz = 6;
+  }
   if (e.code === 'Escape') {
     if (gameState === 'PLAYING') {
       gameState = 'PAUSED';
