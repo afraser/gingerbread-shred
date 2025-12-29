@@ -737,6 +737,20 @@ function gameOver() {
 }
 
 /**
+ * Get the visual bottom Y position of an obstacle (excluding shadow)
+ * @param {Object} obstacle - The obstacle object
+ * @returns {number} The Y coordinate of the obstacle's visual bottom
+ */
+function getObstacleBottom(obstacle) {
+  // Rocks have a smaller visual bottom due to their y-shift
+  if (obstacle.type.startsWith('rock')) {
+    return obstacle.y + 15;
+  }
+  // Trees and ramps
+  return obstacle.y + 20;
+}
+
+/**
  * --- DRAWING ---
  * Draw all game elements for a frame.
  */
@@ -765,8 +779,14 @@ function draw() {
     }
   });
 
-  // Draw Obstacles
+  // Player visual bottom for depth sorting
+  const playerBottom = player.y + 15;
+
+  // Draw Obstacles BEHIND player (visual bottom <= player bottom)
   obstacles.forEach((o) => {
+    const obstacleBottom = getObstacleBottom(o);
+    if (obstacleBottom > playerBottom) return; // Skip, will draw later
+
     // Convert world X to screen X using camera offset
     let screenX = o.worldX - cameraX + canvas.width / 2;
     const obstacleDef = OBSTACLE_TYPES[o.type];
@@ -818,6 +838,34 @@ function draw() {
       }
     }
   }
+
+  // Draw Obstacles IN FRONT of player (visual bottom > player bottom)
+  obstacles.forEach((o) => {
+    const obstacleBottom = getObstacleBottom(o);
+    if (obstacleBottom <= playerBottom) return; // Already drawn
+
+    // Convert world X to screen X using camera offset
+    let screenX = o.worldX - cameraX + canvas.width / 2;
+    const obstacleDef = OBSTACLE_TYPES[o.type];
+
+    // Only draw if visible on screen
+    if (screenX > -obstacleDef.w && screenX < canvas.width + obstacleDef.w) {
+      if (o.type === "tree1") drawTree(screenX, o.y, 1);
+      else if (o.type === "tree2") drawTree(screenX, o.y, 2);
+      else if (o.type === "tree3") drawTree(screenX, o.y, 3);
+      else if (o.type === "rock1") drawRock(screenX, o.y, 1);
+      else if (o.type === "rock2") drawRock(screenX, o.y, 2);
+      else if (o.type === "rock3") drawRock(screenX, o.y, 3);
+      else if (o.type === "ramp") drawRamp(screenX, o.y);
+
+      // Draw hitbox
+      if (SHOW_HITBOXES) {
+        ctx.strokeStyle = "blue"; // Different color for obstacles in front
+        ctx.lineWidth = 2;
+        ctx.strokeRect(screenX, o.y, obstacleDef.w, obstacleDef.h);
+      }
+    }
+  });
 
   // Draw touch indicators
   if (touch.active && gameState === "PLAYING") {
