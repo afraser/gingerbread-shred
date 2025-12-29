@@ -155,7 +155,12 @@ const FLIP_ROTATION_LAID_BACK = -0.5;
 const FLIP_ROTATION_LAID_FORWARD = 0.5;
 
 // Grind flip cycle: laid-back → upright → laid-forward → upright
-const GRIND_FLIP_CYCLE = [FLIP_STATE_LAID_BACK, FLIP_STATE_UPRIGHT, FLIP_STATE_LAID_FORWARD, FLIP_STATE_UPRIGHT];
+const GRIND_FLIP_CYCLE = [
+  FLIP_STATE_LAID_BACK,
+  FLIP_STATE_UPRIGHT,
+  FLIP_STATE_LAID_FORWARD,
+  FLIP_STATE_UPRIGHT,
+];
 const GRIND_FLIP_COOLDOWN = 0.15; // Seconds between flip changes while grinding
 
 // HP States
@@ -411,18 +416,12 @@ function update(deltaTime) {
       keys.up = false; // Consume the key press
     }
 
-    // Detect completed flip (returning to upright while airborne)
+    // Detect flips (transitioning through inverted)
     if (
-      player.flipState === FLIP_STATE_UPRIGHT &&
-      player.lastFlipState !== FLIP_STATE_UPRIGHT
+      player.flipState === FLIP_STATE_UPSIDE_DOWN &&
+      player.lastFlipState !== FLIP_STATE_UPSIDE_DOWN
     ) {
-      // Completed a full rotation (either forward or backward)
-      if (
-        player.lastFlipState === FLIP_STATE_LAID_FORWARD ||
-        player.lastFlipState === FLIP_STATE_LAID_BACK
-      ) {
-        player.flipsCompleted++;
-      }
+      player.flipsCompleted++;
     }
 
     player.lastFlipState = player.flipState;
@@ -614,12 +613,15 @@ function update(deltaTime) {
         if (player.grindFlipCooldown <= 0) {
           if (keys.up) {
             // Cycle forward: laid-back → upright → laid-forward → upright
-            player.grindFlipIndex = (player.grindFlipIndex + 1) % GRIND_FLIP_CYCLE.length;
+            player.grindFlipIndex =
+              (player.grindFlipIndex + 1) % GRIND_FLIP_CYCLE.length;
             player.flipState = GRIND_FLIP_CYCLE[player.grindFlipIndex];
             player.grindFlipCooldown = GRIND_FLIP_COOLDOWN;
           } else if (keys.down) {
             // Cycle backward
-            player.grindFlipIndex = (player.grindFlipIndex - 1 + GRIND_FLIP_CYCLE.length) % GRIND_FLIP_CYCLE.length;
+            player.grindFlipIndex =
+              (player.grindFlipIndex - 1 + GRIND_FLIP_CYCLE.length) %
+              GRIND_FLIP_CYCLE.length;
             player.flipState = GRIND_FLIP_CYCLE[player.grindFlipIndex];
             player.grindFlipCooldown = GRIND_FLIP_COOLDOWN;
           }
