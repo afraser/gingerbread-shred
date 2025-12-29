@@ -1032,12 +1032,27 @@ function drawPlayerUpright(hp, c = ctx) {
     c.stroke();
   }
 
+  // FEET (Draw if HP > 1, behind torso)
+  if (hp > 1) {
+    c.fillStyle = C.brown;
+    // Left foot
+    c.beginPath();
+    c.roundRect(-8.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+    // Right foot
+    c.beginPath();
+    c.roundRect(1.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+  }
+
   // TORSO (Draw if HP > 1)
   if (hp > 1) {
     c.fillStyle = C.brown;
     // Body
-    c.fillRect(-10, -5, 20, 20);
-    c.strokeRect(-10, -5, 20, 20);
+    c.fillRect(-10, -5, 20, 18);
+    c.strokeRect(-10, -5, 20, 18);
     // Buttons
     c.fillStyle = C.green;
     c.beginPath();
@@ -1086,11 +1101,26 @@ function drawPlayerLaidBack(hp, c = ctx) {
     c.stroke();
   }
 
+  // FEET (Draw if HP > 1, behind torso)
+  if (hp > 1) {
+    c.fillStyle = C.brown;
+    // Left foot
+    c.beginPath();
+    c.roundRect(-8.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+    // Right foot
+    c.beginPath();
+    c.roundRect(1.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+  }
+
   // TORSO & LEGS
   if (hp > 1) {
     c.fillStyle = C.brown;
-    c.fillRect(-10, -5, 20, 20);
-    c.strokeRect(-10, -5, 20, 20);
+    c.fillRect(-10, -5, 20, 18);
+    c.strokeRect(-10, -5, 20, 18);
     c.fillStyle = C.green;
     c.beginPath();
     c.arc(0, 0, 3, 0, Math.PI * 2);
@@ -1135,11 +1165,26 @@ function drawPlayerUpsideDown(hp, c = ctx) {
     c.stroke();
   }
 
+  // FEET (Draw if HP > 1, behind torso)
+  if (hp > 1) {
+    c.fillStyle = C.brown;
+    // Left foot
+    c.beginPath();
+    c.roundRect(-8.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+    // Right foot
+    c.beginPath();
+    c.roundRect(1.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+  }
+
   // TORSO & LEGS
   if (hp > 1) {
     c.fillStyle = C.brown;
-    c.fillRect(-10, -5, 20, 20);
-    c.strokeRect(-10, -5, 20, 20);
+    c.fillRect(-10, -5, 20, 18);
+    c.strokeRect(-10, -5, 20, 18);
   }
 
   c.restore();
@@ -1182,11 +1227,26 @@ function drawPlayerLaidForward(hp, c = ctx) {
     c.stroke();
   }
 
+  // FEET (Draw if HP > 1, behind torso)
+  if (hp > 1) {
+    c.fillStyle = C.brown;
+    // Left foot
+    c.beginPath();
+    c.roundRect(-8.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+    // Right foot
+    c.beginPath();
+    c.roundRect(1.5, 8, 7, 12, 2.5);
+    c.fill();
+    c.stroke();
+  }
+
   // TORSO & LEGS
   if (hp > 1) {
     c.fillStyle = C.brown;
-    c.fillRect(-10, -5, 20, 20);
-    c.strokeRect(-10, -5, 20, 20);
+    c.fillRect(-10, -5, 20, 18);
+    c.strokeRect(-10, -5, 20, 18);
     c.fillStyle = C.green;
     c.beginPath();
     c.arc(0, 0, 3, 0, Math.PI * 2);
