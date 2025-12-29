@@ -21,14 +21,14 @@ function showBonus(points) {
 
   // Position above player's head
   bonusEl.style.left = `${player.x}px`;
-  bonusEl.style.top = `${player.y - 40}px`;
+  bonusEl.style.top = `${player.y - BONUS_TEXT_Y_OFFSET}px`;
 
   gameContainer.appendChild(bonusEl);
 
   // Remove element after animation completes
   setTimeout(() => {
     bonusEl.remove();
-  }, 1000);
+  }, BONUS_TEXT_DURATION_MS);
 }
 
 // PICO-8 Palette approximation
@@ -43,13 +43,114 @@ const C = {
   light_grey: "#c2c3c7",
 };
 
-const TERMINAL_VELOCITY = 20;
+// --- GAME CONSTANTS ---
+
+// Display & Debug
 const PLAYER_Y = 200; // Fixed screen Y position of player
 const SHOW_HITBOXES = false; // Debug flag to visualize collision boxes
 
+// Physics
+const TERMINAL_VELOCITY = 20;
+const GRAVITY = 0.4;
+const PARTICLE_GRAVITY = 0.5;
+const ANGLE_DECAY = 0.99;
+const PLAYER_ROTATION_FACTOR = 0.3;
+
+// Movement
+const ACCELERATION_RATE = 0.05;
+const BRAKE_RATE = 0.15;
+const STEERING_RATE = 0.06;
+const LATERAL_VELOCITY_MULTIPLIER = 1.5;
+const ANGLE_CLAMP_MIN = -2;
+const ANGLE_CLAMP_MAX = 2;
+const SCOOT_THRESHOLD = 0.5;
+const SCOOT_SPEED = 140; // Pixels per second
+const SCOOT_HOP_VELOCITY = 3;
+
+// Game Mechanics
+const INITIAL_GAME_SPEED = 3;
+const INITIAL_HP = 4;
+const MIN_FLIP_SPEED = 2;
+const CRASH_SPEED_REDUCTION = 0.3;
+const CRASH_RECOVERY_FRAMES = 60; // ~1 second at 60fps
+const INVULNERABILITY_FRAMES = 120; // ~2 seconds at 60fps
+const HIT_DODGE_CHANCE = 0.5;
+
+// Jump & Flip
+const JUMP_BOOST_MULTIPLIER = 1.5;
+const JUMP_BOOST_BASE = 5;
+const JUMP_BONUS_MULTIPLIER = 100;
+const FLIP_BONUS_POINTS = 5000;
+
+// Scoring
+const SCORE_MULTIPLIER = 1;
+
+// Spawning
+const BASE_SPAWN_CHANCE = 0.03;
+const SPAWN_SPEED_DIVISOR = 200;
+const TREE_SPAWN_PROBABILITY = 0.5;
+const ROCK_SPAWN_THRESHOLD = 0.75;
+const OBSTACLE_SPAWN_WIDTH_MULTIPLIER = 1.5;
+const OBSTACLE_SPAWN_Y_OFFSET = 50;
+const OBSTACLE_CLEANUP_Y = -50;
+const SNOW_PARTICLE_COUNT = 50;
+
+// Touch Input
+const TOUCH_DRAG_THRESHOLD = 20;
+const DOUBLE_TAP_THRESHOLD_MS = 300;
+const TOUCH_INDICATOR_ALPHA = 0.8;
+const TOUCH_INDICATOR_Y_OFFSET = 80;
+const TOUCH_INDICATOR_SPACING = 30;
+const TOUCH_INDICATOR_VERTICAL_SPACING = 40;
+
+// Visual Effects
+const BONUS_TEXT_Y_OFFSET = 40;
+const BONUS_TEXT_DURATION_MS = 1000;
+const SCREEN_SHAKE_AMOUNT = 15;
+const SCREEN_SHAKE_DECAY = 0.9;
+const SCREEN_SHAKE_MIN_THRESHOLD = 0.5;
+const SHADOW_OPACITY = 0.2;
+const INVUL_BLINK_DIVISOR = 4;
+const PARALLAX_FACTOR = 0.5;
+const SNOW_FALL_SPEED = 0.3;
+
+// Player Rendering Offsets
+const PLAYER_RENDER_X_OFFSET = 20;
+const PLAYER_RENDER_Y_OFFSET = -10;
+const PLAYER_WIDTH = 40;
+const PLAYER_HEIGHT = 15;
+
+// Particle Configuration
+const BRAKE_PARTICLE_COUNT = 2;
+const BRAKE_PARTICLE_MIN_LIFE = 20;
+const BRAKE_PARTICLE_MAX_LIFE = 10;
+const BRAKE_PARTICLE_Y_OFFSET = 20;
+const BRAKE_PARTICLE_DY = -2.5;
+const BRAKE_PARTICLE_MIN_SIZE = 3;
+const BRAKE_PARTICLE_MAX_SIZE = 3;
+const CRUMB_COUNT = 5;
+const CHUNK_SIZE = 15;
+const CHUNK_LIFETIME = 100;
+const CRUMB_SIZE = 5;
+const CRUMB_LIFETIME = 60;
+
+// Flip States
+const FLIP_STATE_UPRIGHT = 0;
+const FLIP_STATE_LAID_BACK = 1;
+const FLIP_STATE_UPSIDE_DOWN = 2;
+const FLIP_STATE_LAID_FORWARD = 3;
+const FLIP_ROTATION_LAID_BACK = -0.5;
+const FLIP_ROTATION_LAID_FORWARD = 0.5;
+
+// HP States
+const HP_FULL = 4;
+const HP_NO_ARM = 3;
+const HP_NO_ARMS = 2;
+const HP_HEAD_ONLY = 1;
+
 // Obstacle Type Definitions
 const OBSTACLE_TYPES = {
-  tree1: { w: 26, h: 20 }, // Tall Pine - narrow and tall
+  tree1: { w: 20, h: 20 }, // Tall Pine - narrow and tall
   tree2: { w: 30, h: 20 }, // Layered Tree - wider with stacked layers
   tree3: { w: 30, h: 20 }, // Bushy Tree - wide and short
   rock1: { w: 30, h: 15 }, // Off-center hump
@@ -61,7 +162,7 @@ const OBSTACLE_TYPES = {
 // Game State
 let gameState = "MENU"; // MENU, PLAYING, GAMEOVER
 let score = 0;
-let gameSpeed = 3;
+let gameSpeed = INITIAL_GAME_SPEED;
 let shakeAmt = 0;
 let cameraX = 0; // Camera position in world space
 
@@ -199,7 +300,7 @@ function checkCollision(box1, box2) {
 
 function init() {
   score = 0;
-  gameSpeed = 3;
+  gameSpeed = INITIAL_GAME_SPEED;
   shakeAmt = 0;
   cameraX = 0;
 
@@ -213,17 +314,17 @@ function init() {
   player = {
     x: canvas.width / 2, // Screen position (stays centered)
     y: PLAYER_Y,
-    w: 40,
-    h: 15, // Hitbox is small here because we only care if feet/board hit
+    w: PLAYER_WIDTH,
+    h: PLAYER_HEIGHT, // Hitbox is small here because we only care if feet/board hit
     worldX: 0, // Position in world space
     angle: 0, // Direction angle (-1 to 1, 0 is straight down)
     dx: 0, // Horizontal velocity in world space
-    hp: 4, // 4:Full, 3:NoArm, 2:NoArms, 1:HeadOnly
+    hp: INITIAL_HP, // 4:Full, 3:NoArm, 2:NoArms, 1:HeadOnly
     invul: 0,
     z: 0, // Jump height
     dz: 0, // Jump velocity
-    flipState: 0, // 0:upright, 1:laid-back, 2:upside-down, 3:laid-forward
-    lastFlipState: 0, // Track previous flip state to detect completed rotations
+    flipState: FLIP_STATE_UPRIGHT, // 0:upright, 1:laid-back, 2:upside-down, 3:laid-forward
+    lastFlipState: FLIP_STATE_UPRIGHT, // Track previous flip state to detect completed rotations
     flipsCompleted: 0, // Count full rotations while airborne
     crashed: false,
     crashTimer: 0,
@@ -234,7 +335,7 @@ function init() {
   snow = [];
 
   // Init background snow
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < SNOW_PARTICLE_COUNT; i++) {
     snow.push({
       worldX: (Math.random() - 0.5) * canvas.width * 2,
       y: Math.random() * canvas.height,
@@ -256,20 +357,18 @@ function update(deltaTime) {
   if (gameState !== "PLAYING") return;
 
   // Score based on distance traveled downhill
-  score += gameSpeed * deltaTime * 10; // Distance-based scoring
-  uiScore.innerText = "SCORE: " + Math.floor(score);
-
-  if (Math.floor(score) % 500 === 0) gameSpeed += 0.5 * deltaTime;
+  score += gameSpeed * deltaTime; // Distance-based scoring
+  uiScore.innerText = "SCORE: " + Math.floor(score).toLocaleString();
 
   // Process touch input
   if (touch.active) {
     // Horizontal drag for steering (relative to touch start)
     const horizontalDrag = touch.startX - touch.currentX;
-    if (horizontalDrag > 20) {
+    if (horizontalDrag > TOUCH_DRAG_THRESHOLD) {
       // Dragged left = steer left
       keys.left = true;
       keys.right = false;
-    } else if (horizontalDrag < -20) {
+    } else if (horizontalDrag < -TOUCH_DRAG_THRESHOLD) {
       // Dragged right = steer right
       keys.right = true;
       keys.left = false;
@@ -280,11 +379,11 @@ function update(deltaTime) {
 
     // Vertical drag for speed control (relative to touch start)
     const verticalDrag = touch.startY - touch.currentY;
-    if (verticalDrag > 20) {
+    if (verticalDrag > TOUCH_DRAG_THRESHOLD) {
       // Dragged up = slow down
       keys.up = true;
       keys.down = false;
-    } else if (verticalDrag < -20) {
+    } else if (verticalDrag < -TOUCH_DRAG_THRESHOLD) {
       // Dragged down = speed up
       keys.down = true;
       keys.up = false;
@@ -295,8 +394,7 @@ function update(deltaTime) {
   }
 
   // Flip controls when airborne (only at reasonable speed)
-  const minFlipSpeed = 2; // Minimum speed required to flip
-  if (player.z > 0 && gameSpeed >= minFlipSpeed) {
+  if (player.z > 0 && gameSpeed >= MIN_FLIP_SPEED) {
     // Down arrow advances flip, Up arrow reverses flip
     if (keys.down) {
       player.flipState = (player.flipState + 1) % 4;
@@ -308,9 +406,15 @@ function update(deltaTime) {
     }
 
     // Detect completed flip (returning to upright while airborne)
-    if (player.flipState === 0 && player.lastFlipState !== 0) {
+    if (
+      player.flipState === FLIP_STATE_UPRIGHT &&
+      player.lastFlipState !== FLIP_STATE_UPRIGHT
+    ) {
       // Completed a full rotation (either forward or backward)
-      if (player.lastFlipState === 3 || player.lastFlipState === 1) {
+      if (
+        player.lastFlipState === FLIP_STATE_LAID_FORWARD ||
+        player.lastFlipState === FLIP_STATE_LAID_BACK
+      ) {
         player.flipsCompleted++;
       }
     }
@@ -320,71 +424,76 @@ function update(deltaTime) {
 
   // Acceleration (disabled when crashed)
   if (keys.down && player.z === 0 && !player.crashed) {
-    gameSpeed = Math.min(TERMINAL_VELOCITY, gameSpeed + 0.05 * deltaTime * 60);
+    gameSpeed = Math.min(
+      TERMINAL_VELOCITY,
+      gameSpeed + ACCELERATION_RATE * deltaTime * 60
+    );
   }
 
   // Braking
   if (keys.up && player.z === 0) {
-    gameSpeed = Math.max(0, gameSpeed - 0.15 * deltaTime * 60);
+    gameSpeed = Math.max(0, gameSpeed - BRAKE_RATE * deltaTime * 60);
 
     // Snow cloud effect when braking
-    if (gameSpeed > 0.5 && Math.random() < 0.3) {
+    if (gameSpeed > SCOOT_THRESHOLD && Math.random() < 0.3) {
       // Spawn snow particles beneath the snowboard
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < BRAKE_PARTICLE_COUNT; i++) {
         particles.push({
-          worldX: player.worldX + Math.random() * 40, // Across full snowboard width
-          y: player.y + 20, // Below the snowboard
+          worldX: player.worldX + Math.random() * PLAYER_WIDTH, // Across full snowboard width
+          y: player.y + BRAKE_PARTICLE_Y_OFFSET, // Below the snowboard
           dx: (Math.random() - 0.5) * 5 + player.dx,
-          dy: -2.5,
-          w: 3 + Math.random() * 3,
-          h: 3 + Math.random() * 3,
+          dy: BRAKE_PARTICLE_DY,
+          w: BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
+          h: BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
           color: "#fff",
           rot: 0,
           rSpeed: 0,
-          life: 20 + Math.random() * 10, // Short lifetime
+          life:
+            BRAKE_PARTICLE_MIN_LIFE + Math.random() * BRAKE_PARTICLE_MAX_LIFE, // Short lifetime
         });
       }
     }
   }
 
   // Scoot mode: when speed is very low, allow direct left/right movement
-  const scootThreshold = 0.5;
-  const isScootMode = gameSpeed < scootThreshold;
+  const isScootMode = gameSpeed < SCOOT_THRESHOLD;
 
   if (isScootMode) {
     // Scoot left/right by directly moving worldX
-    const scootSpeed = 140; // Pixels per second
     if (keys.left) {
-      player.worldX -= scootSpeed * deltaTime;
+      player.worldX -= SCOOT_SPEED * deltaTime;
       // Little hop animation when scooting
       if (player.z === 0) {
-        player.dz = 3; // Small upward velocity
+        player.dz = SCOOT_HOP_VELOCITY; // Small upward velocity
       }
     }
     if (keys.right) {
-      player.worldX += scootSpeed * deltaTime;
+      player.worldX += SCOOT_SPEED * deltaTime;
       // Little hop animation when scooting
       if (player.z === 0) {
-        player.dz = 3; // Small upward velocity
+        player.dz = SCOOT_HOP_VELOCITY; // Small upward velocity
       }
     }
     player.angle = 0; // Reset angle when scooting
     player.dx = 0;
   } else {
     // Normal steering: adjust angle based on left/right
-    if (keys.left) player.angle -= 0.06 * deltaTime * 60;
-    if (keys.right) player.angle += 0.06 * deltaTime * 60;
+    if (keys.left) player.angle -= STEERING_RATE * deltaTime * 60;
+    if (keys.right) player.angle += STEERING_RATE * deltaTime * 60;
 
-    player.angle *= 0.99; // Angle decay
-    player.angle = Math.max(-2, Math.min(2, player.angle)); // Clamp angle
-    player.dx = player.angle * gameSpeed * 1.5;
+    player.angle *= ANGLE_DECAY; // Angle decay
+    player.angle = Math.max(
+      ANGLE_CLAMP_MIN,
+      Math.min(ANGLE_CLAMP_MAX, player.angle)
+    ); // Clamp angle
+    player.dx = player.angle * gameSpeed * LATERAL_VELOCITY_MULTIPLIER;
 
     player.worldX += player.dx * deltaTime * 60; // Scale movement by deltaTime
   }
 
   // Jumping
   player.z += player.dz * deltaTime * 60;
-  player.dz -= 0.4 * deltaTime * 60; // Gravity
+  player.dz -= GRAVITY * deltaTime * 60; // Gravity
   player.y -= player.dz * deltaTime * 60; // Make the player "jump"
   if (player.z <= 0) {
     player.z = 0;
@@ -392,19 +501,19 @@ function update(deltaTime) {
     player.y = PLAYER_Y; // Reset Y position when landing
 
     // Check for successful flip landing
-    if (player.flipState === 0 && player.flipsCompleted > 0) {
-      // Award bonus: 5000 per flip
-      const flipBonus = player.flipsCompleted * 5000;
+    if (player.flipState === FLIP_STATE_UPRIGHT && player.flipsCompleted > 0) {
+      // Award bonus: points per flip
+      const flipBonus = player.flipsCompleted * FLIP_BONUS_POINTS;
       score += flipBonus;
       showBonus(flipBonus);
     }
 
     // Check for crash landing (landing in non-upright state)
-    if (player.flipState !== 0 && !player.crashed) {
+    if (player.flipState !== FLIP_STATE_UPRIGHT && !player.crashed) {
       player.crashed = true;
-      player.crashTimer = 60; // ~1 second recovery at 60fps
-      gameSpeed *= 0.3; // Greatly diminish velocity
-      if (player.flipState === 2) {
+      player.crashTimer = CRASH_RECOVERY_FRAMES; // ~1 second recovery at 60fps
+      gameSpeed *= CRASH_SPEED_REDUCTION; // Greatly diminish velocity
+      if (player.flipState === FLIP_STATE_UPSIDE_DOWN) {
         hitPlayer(); // Hit if landing upside-down
       } else {
         crumble(); // Just crumble limbs otherwise
@@ -413,7 +522,7 @@ function update(deltaTime) {
 
     // Reset flip tracking on landing
     player.flipsCompleted = 0;
-    player.lastFlipState = 0;
+    player.lastFlipState = FLIP_STATE_UPRIGHT;
   }
   cameraX = player.worldX;
 
@@ -425,25 +534,25 @@ function update(deltaTime) {
     player.crashTimer--;
     if (player.crashTimer === 0) {
       player.crashed = false;
-      player.flipState = 0; // Return to upright
+      player.flipState = FLIP_STATE_UPRIGHT; // Return to upright
     }
   }
 
   // --- Screen Shake Decay ---
-  if (shakeAmt > 0) shakeAmt *= 0.9;
-  if (shakeAmt < 0.5) shakeAmt = 0;
+  if (shakeAmt > 0) shakeAmt *= SCREEN_SHAKE_DECAY;
+  if (shakeAmt < SCREEN_SHAKE_MIN_THRESHOLD) shakeAmt = 0;
 
   // --- Obstacle Spawner ---
   // Chance to spawn increases slightly with speed
-  if (Math.random() < 0.03 + gameSpeed / 200) {
+  if (Math.random() < BASE_SPAWN_CHANCE + gameSpeed / SPAWN_SPEED_DIVISOR) {
     const rand = Math.random();
     let type;
 
-    if (rand < 0.5) {
+    if (rand < TREE_SPAWN_PROBABILITY) {
       // 50% chance: tree (randomly pick variant)
       const treeVariant = Math.floor(Math.random() * 3) + 1;
       type = `tree${treeVariant}`;
-    } else if (rand < 0.75) {
+    } else if (rand < ROCK_SPAWN_THRESHOLD) {
       // 25% chance: rock (randomly pick variant)
       const rockVariant = Math.floor(Math.random() * 3) + 1;
       type = `rock${rockVariant}`;
@@ -454,13 +563,14 @@ function update(deltaTime) {
 
     // Spawn in world coordinates around the visible area
     const worldXPos =
-      player.worldX + (Math.random() - 0.5) * canvas.width * 1.5;
+      player.worldX +
+      (Math.random() - 0.5) * canvas.width * OBSTACLE_SPAWN_WIDTH_MULTIPLIER;
 
     // Create new obstacle
     const newObstacle = {
       type: type,
       worldX: worldXPos,
-      y: canvas.height + 50,
+      y: canvas.height + OBSTACLE_SPAWN_Y_OFFSET,
       active: true,
     };
 
@@ -519,13 +629,13 @@ function update(deltaTime) {
 
       if (checkCollision(playerBox, obstacleBox)) {
         if (o.type === "ramp") {
-          player.dz = gameSpeed * 1.5 + 5; // Jump boost
-          const jumpBonus = Math.floor(100 * gameSpeed);
+          player.dz = gameSpeed * JUMP_BOOST_MULTIPLIER + JUMP_BOOST_BASE; // Jump boost
+          const jumpBonus = Math.floor(JUMP_BONUS_MULTIPLIER * gameSpeed);
           score += jumpBonus; // Jump score bonus
           showBonus(jumpBonus);
           // Reset flip tracking when taking off
           player.flipsCompleted = 0;
-          player.lastFlipState = 0;
+          player.lastFlipState = FLIP_STATE_UPRIGHT;
         } else {
           hitPlayer();
         }
@@ -534,7 +644,7 @@ function update(deltaTime) {
     }
 
     // Cleanup - remove if off top of screen
-    if (o.y < -50) obstacles.splice(i, 1);
+    if (o.y < OBSTACLE_CLEANUP_Y) obstacles.splice(i, 1);
   }
 
   // --- Update Particles (Limbs/Crumbs) ---
@@ -542,7 +652,7 @@ function update(deltaTime) {
     let p = particles[i];
     p.worldX += p.dx;
     p.y += p.dy;
-    p.dy += 0.5; // Gravity
+    p.dy += PARTICLE_GRAVITY; // Gravity
     p.rot += p.rSpeed;
     p.life--;
     if (p.life <= 0) particles.splice(i, 1);
@@ -550,7 +660,7 @@ function update(deltaTime) {
 
   // --- Update Background Snow ---
   snow.forEach((s) => {
-    s.y += s.speed * 0.3; // Fall downward slowly
+    s.y += s.speed * SNOW_FALL_SPEED; // Fall downward slowly
 
     // Wrap vertically
     if (s.y > canvas.height) {
@@ -561,14 +671,14 @@ function update(deltaTime) {
 }
 
 /** Handle player getting hit by an obstacle. */
-function hitPlayer(crumbleThreshold = 0.5) {
+function hitPlayer(crumbleThreshold = HIT_DODGE_CHANCE) {
   if (Math.random() < crumbleThreshold) {
     crumble();
     return; // 50% chance to avoid damage (luck)
   }
   player.hp--;
-  player.invul = 120; // ~2 seconds invulnerability at 60fps
-  shakeAmt = 15;
+  player.invul = INVULNERABILITY_FRAMES; // ~2 seconds invulnerability at 60fps
+  shakeAmt = SCREEN_SHAKE_AMOUNT;
 
   // Spawn limb particles
   crumble();
@@ -586,26 +696,26 @@ function crumble() {
     y: player.y,
     dx: (Math.random() - 0.5) * 10,
     dy: (Math.random() - 0.5) * 10 - 5,
-    w: 15,
-    h: 15,
+    w: CHUNK_SIZE,
+    h: CHUNK_SIZE,
     color: C.brown,
     rot: 0,
     rSpeed: (Math.random() - 0.5) * 0.5,
-    life: 100,
+    life: CHUNK_LIFETIME,
   });
   // Generate crumbs
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < CRUMB_COUNT; i++) {
     particles.push({
       worldX: player.worldX,
       y: player.y,
       dx: (Math.random() - 0.5) * 15,
       dy: (Math.random() - 0.5) * 15,
-      w: 5,
-      h: 5,
+      w: CRUMB_SIZE,
+      h: CRUMB_SIZE,
       color: C.brown,
       rot: 0,
       rSpeed: 0,
-      life: 60,
+      life: CRUMB_LIFETIME,
     });
   }
 }
@@ -643,7 +753,7 @@ function draw() {
   ctx.fillStyle = "#fff";
   snow.forEach((s) => {
     // Convert world X to screen X with parallax effect (0.5 = slower than obstacles)
-    let screenX = (s.worldX - cameraX) * 0.5 + canvas.width / 2;
+    let screenX = (s.worldX - cameraX) * PARALLAX_FACTOR + canvas.width / 2;
 
     // Only draw if visible
     if (screenX > -s.size && screenX < canvas.width + s.size) {
@@ -692,7 +802,7 @@ function draw() {
   // Draw Player
   if (gameState !== "GAMEOVER") {
     // Blink if invulnerable
-    if (Math.floor(player.invul / 4) % 2 === 0) {
+    if (Math.floor(player.invul / INVUL_BLINK_DIVISOR) % 2 === 0) {
       drawPlayer(player);
 
       // Draw player hitbox (in screen space)
@@ -720,28 +830,32 @@ function drawTouchIndicators(x, y) {
   const verticalDrag = touch.startY - touch.currentY;
 
   ctx.save();
-  ctx.globalAlpha = 0.8;
+  ctx.globalAlpha = TOUCH_INDICATOR_ALPHA;
 
   // Position indicators above the touch point
-  const indicatorY = y - 80;
+  const indicatorY = y - TOUCH_INDICATOR_Y_OFFSET;
   let indicatorX = x;
 
   // Steering indicator (left/right arrows)
-  if (horizontalDrag > 20) {
+  if (horizontalDrag > TOUCH_DRAG_THRESHOLD) {
     // Left arrow
-    drawArrow(indicatorX - 30, indicatorY, "left");
-  } else if (horizontalDrag < -20) {
+    drawArrow(indicatorX - TOUCH_INDICATOR_SPACING, indicatorY, "left");
+  } else if (horizontalDrag < -TOUCH_DRAG_THRESHOLD) {
     // Right arrow
-    drawArrow(indicatorX + 30, indicatorY, "right");
+    drawArrow(indicatorX + TOUCH_INDICATOR_SPACING, indicatorY, "right");
   }
 
   // Speed indicator (up/down arrows)
-  if (verticalDrag > 20) {
+  if (verticalDrag > TOUCH_DRAG_THRESHOLD) {
     // Up arrow (slowing down)
-    drawArrow(indicatorX, indicatorY - 40, "up");
-  } else if (verticalDrag < -20) {
+    drawArrow(indicatorX, indicatorY - TOUCH_INDICATOR_VERTICAL_SPACING, "up");
+  } else if (verticalDrag < -TOUCH_DRAG_THRESHOLD) {
     // Down arrow (speeding up)
-    drawArrow(indicatorX, indicatorY + 40, "down");
+    drawArrow(
+      indicatorX,
+      indicatorY + TOUCH_INDICATOR_VERTICAL_SPACING,
+      "down"
+    );
   }
 
   ctx.restore();
@@ -785,13 +899,13 @@ function drawPlayer(player) {
   ctx.save();
   ctx.translate(x, y);
   // Shift all drawing to align drawing with player hitbox coords
-  ctx.translate(20, -10);
+  ctx.translate(PLAYER_RENDER_X_OFFSET, PLAYER_RENDER_Y_OFFSET);
 
   // Tilt based on direction angle
-  ctx.rotate(angle * 0.3);
+  ctx.rotate(angle * PLAYER_ROTATION_FACTOR);
 
   // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
+  ctx.fillStyle = `rgba(0,0,0,${SHADOW_OPACITY})`;
   ctx.beginPath();
   ctx.ellipse(0, 25 + z, 20, 8, 0, 0, Math.PI * 2);
   ctx.fill();
@@ -806,16 +920,16 @@ function drawPlayer(player) {
   ctx.stroke();
 
   // Draw player based on flip state
-  if (flipState === 0) {
+  if (flipState === FLIP_STATE_UPRIGHT) {
     // Upright (normal) position
     drawPlayerUpright(hp);
-  } else if (flipState === 1) {
+  } else if (flipState === FLIP_STATE_LAID_BACK) {
     // Laid-back position
     drawPlayerLaidBack(hp);
-  } else if (flipState === 2) {
+  } else if (flipState === FLIP_STATE_UPSIDE_DOWN) {
     // Upside-down (facing backward) position
     drawPlayerUpsideDown(hp);
-  } else if (flipState === 3) {
+  } else if (flipState === FLIP_STATE_LAID_FORWARD) {
     // Laid-forward position
     drawPlayerLaidForward(hp);
   }
@@ -879,7 +993,7 @@ function drawPlayerUpright(hp) {
 function drawPlayerLaidBack(hp) {
   // Player leaning back, body tilted backward
   ctx.save();
-  ctx.rotate(-0.5); // Lean back
+  ctx.rotate(FLIP_ROTATION_LAID_BACK); // Lean back
 
   if (hp > 0) {
     // HEAD - positioned above body
@@ -974,7 +1088,7 @@ function drawPlayerUpsideDown(hp) {
 function drawPlayerLaidForward(hp) {
   // Player leaning forward, body tilted forward
   ctx.save();
-  ctx.rotate(0.5); // Lean forward
+  ctx.rotate(FLIP_ROTATION_LAID_FORWARD); // Lean forward
 
   if (hp > 0) {
     // HEAD - positioned above body
@@ -1041,24 +1155,33 @@ function drawRamp(x, y) {
 
 function drawTree(x, y, variant = 1) {
   // Shift entire tree up to include trunk in hitbox
-  y = y - 10;
-
-  // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.beginPath();
-  ctx.ellipse(x + 18, y + 30, 18, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
+  y -= 10;
 
   if (variant === 1) {
     // Variant 1: Tall Pine - narrow, tall triangle
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 18, y + 30, 18, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tree foliage
     ctx.fillStyle = C.green;
     ctx.beginPath();
-    ctx.moveTo(x + 15, y - 25); // Top (higher)
-    ctx.lineTo(x + 28, y + 20); // Bot Right (narrower)
-    ctx.lineTo(x + 2, y + 20); // Bot Left (narrower)
+    ctx.moveTo(x + 10, y - 25); // Top (higher)
+    ctx.lineTo(x + 23, y + 20); // Bot Right (narrower)
+    ctx.lineTo(x - 3, y + 20); // Bot Left (narrower)
     ctx.fill();
+    // Trunk
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(x + 5, y + 20, 10, 10);
   } else if (variant === 2) {
     // Variant 2: Layered Tree - stacked triangles
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 20, y + 30, 20, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tree foliage
     ctx.fillStyle = C.green;
 
     // Bottom layer
@@ -1081,19 +1204,27 @@ function drawTree(x, y, variant = 1) {
     ctx.lineTo(x + 25, y - 5);
     ctx.lineTo(x + 5, y - 5);
     ctx.fill();
+    // Trunk
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(x + 10, y + 20, 10, 10);
   } else {
     // Variant 3: Bushy Tree - wider, shorter triangle
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.ellipse(x + 18, y + 30, 25, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tree foliage
     ctx.fillStyle = C.green;
     ctx.beginPath();
     ctx.moveTo(x + 15, y - 10); // Top (lower)
     ctx.lineTo(x + 38, y + 20); // Bot Right (wider)
     ctx.lineTo(x - 8, y + 20); // Bot Left (wider)
     ctx.fill();
+    // Trunk
+    ctx.fillStyle = C.brown;
+    ctx.fillRect(x + 10, y + 20, 10, 10);
   }
-
-  // Trunk
-  ctx.fillStyle = C.brown;
-  ctx.fillRect(x + 10, y + 20, 10, 10);
 }
 
 function drawRock(x, y, variant = 1) {
@@ -1228,7 +1359,7 @@ window.addEventListener(
     const currentTime = Date.now();
     const tapGap = currentTime - touch.lastTapTime;
 
-    if (tapGap < 300 && tapGap > 0) {
+    if (tapGap < DOUBLE_TAP_THRESHOLD_MS && tapGap > 0) {
       // Double tap detected
       if (gameState === "PLAYING") {
         gameState = "PAUSED";
