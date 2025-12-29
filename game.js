@@ -1124,13 +1124,6 @@ function drawPlayerUpsideDown(hp, c = ctx) {
     c.fillStyle = C.brown;
     c.fillRect(-10, -5, 20, 20);
     c.strokeRect(-10, -5, 20, 20);
-    c.fillStyle = C.green;
-    c.beginPath();
-    c.arc(0, 0, 3, 0, Math.PI * 2);
-    c.fill();
-    c.beginPath();
-    c.arc(0, 8, 3, 0, Math.PI * 2);
-    c.fill();
   }
 
   // ARMS
