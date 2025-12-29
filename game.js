@@ -1070,6 +1070,22 @@ function drawPlayerLaidBack(hp, c = ctx) {
     c.fillRect(-3, -15, 6, 2);
   }
 
+  // ARMS - extended outward (draw before torso so they appear behind)
+  if (hp > 2) {
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(-22, -5, 14, 8, 4);
+    c.fill();
+    c.stroke();
+  }
+  if (hp > 3) {
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(8, -5, 14, 8, 4);
+    c.fill();
+    c.stroke();
+  }
+
   // TORSO & LEGS
   if (hp > 1) {
     c.fillStyle = C.brown;
@@ -1082,22 +1098,6 @@ function drawPlayerLaidBack(hp, c = ctx) {
     c.beginPath();
     c.arc(0, 8, 3, 0, Math.PI * 2);
     c.fill();
-  }
-
-  // ARMS - extended outward
-  if (hp > 2) {
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.roundRect(-25, -3, 15, 8, 4);
-    c.fill();
-    c.stroke();
-  }
-  if (hp > 3) {
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.roundRect(10, -3, 15, 8, 4);
-    c.fill();
-    c.stroke();
   }
 
   c.restore();
@@ -1119,27 +1119,27 @@ function drawPlayerUpsideDown(hp, c = ctx) {
     c.stroke();
   }
 
-  // TORSO & LEGS
-  if (hp > 1) {
-    c.fillStyle = C.brown;
-    c.fillRect(-10, -5, 20, 20);
-    c.strokeRect(-10, -5, 20, 20);
-  }
-
-  // ARMS
+  // ARMS (draw before torso so they appear behind)
   if (hp > 2) {
     c.fillStyle = C.brown;
     c.beginPath();
-    c.roundRect(-22, -5, 12, 8, 4);
+    c.roundRect(-22, -5, 14, 8, 4);
     c.fill();
     c.stroke();
   }
   if (hp > 3) {
     c.fillStyle = C.brown;
     c.beginPath();
-    c.roundRect(10, -5, 12, 8, 4);
+    c.roundRect(8, -5, 14, 8, 4);
     c.fill();
     c.stroke();
+  }
+
+  // TORSO & LEGS
+  if (hp > 1) {
+    c.fillStyle = C.brown;
+    c.fillRect(-10, -5, 20, 20);
+    c.strokeRect(-10, -5, 20, 20);
   }
 
   c.restore();
@@ -1166,6 +1166,22 @@ function drawPlayerLaidForward(hp, c = ctx) {
     c.fillRect(-3, -15, 6, 2);
   }
 
+  // ARMS - tucked in forward (draw before torso so they appear behind)
+  if (hp > 2) {
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(-22, -5, 14, 8, 4);
+    c.fill();
+    c.stroke();
+  }
+  if (hp > 3) {
+    c.fillStyle = C.brown;
+    c.beginPath();
+    c.roundRect(8, -5, 14, 8, 4);
+    c.fill();
+    c.stroke();
+  }
+
   // TORSO & LEGS
   if (hp > 1) {
     c.fillStyle = C.brown;
@@ -1178,22 +1194,6 @@ function drawPlayerLaidForward(hp, c = ctx) {
     c.beginPath();
     c.arc(0, 8, 3, 0, Math.PI * 2);
     c.fill();
-  }
-
-  // ARMS - tucked in forward
-  if (hp > 2) {
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.roundRect(-25, 0, 15, 8, 4);
-    c.fill();
-    c.stroke();
-  }
-  if (hp > 3) {
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.roundRect(10, 0, 15, 8, 4);
-    c.fill();
-    c.stroke();
   }
 
   c.restore();
