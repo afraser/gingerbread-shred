@@ -36,3 +36,13 @@ You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. D
 - prevent rails from s
 - Leaderboard
 - Cliffs!
+  - Must be able to enter from top & sides
+  - When player hit-box occludes 50% in either dimension initiate a fall (z = player height at cliff entry point)
+- Levels / Trails
+  1. Implement min/max X-position: Render trees and/or stakes with pink tape along the edges.
+  2. Make a level builder
+  3. Intro screen: "free ride" / "load trail".
+- Add debug mode
+  - Show hit-boxes checkbox.
+  - Invincibility checkbox.
+  - Obstacle checkboxes.
