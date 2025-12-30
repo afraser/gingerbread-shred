@@ -12,7 +12,6 @@ You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. D
 
 # Ideas / TODO
 
-- Allow jumping off of a rail.
 - Bonus for landing on a rail from a ramp jump.
 - Bonus for exiting a rail cleanly.
 - Bonus for exiting a rail cleanly after backslide.
