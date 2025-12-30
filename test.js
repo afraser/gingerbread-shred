@@ -219,8 +219,9 @@ function setupPlayer() {
         invul: 0,
         z: 0,
         dz: 0,
-        flipState: FLIP_STATE_UPRIGHT,
-        lastFlipState: FLIP_STATE_UPRIGHT,
+        state: PLAYER_STATE.UPRIGHT,
+        flipIndex: 0,
+        lastState: PLAYER_STATE.UPRIGHT,
         flipsCompleted: 0,
         crashed: false,
         crashTimer: 0,
@@ -282,24 +283,24 @@ test('Physics: angle should be clamped to limits', () => {
 test('Flip: should not advance flip state when on ground', () => {
     setupPlayer();
     player.z = 0; // On ground
-    player.flipState = FLIP_STATE_UPRIGHT;
+    player.state = PLAYER_STATE.UPRIGHT;
     keys.down = true;
 
     update(1/60);
 
-    assertEqual(player.flipState, FLIP_STATE_UPRIGHT, 'Should not flip when on ground');
+    assertEqual(player.state, PLAYER_STATE.UPRIGHT, 'Should not flip when on ground');
 });
 
 test('Flip: should advance flip state when airborne', () => {
     setupPlayer();
     player.z = 10; // Airborne
     gameSpeed = MIN_FLIP_SPEED + 1;
-    player.flipState = FLIP_STATE_UPRIGHT;
+    player.state = PLAYER_STATE.UPRIGHT;
     keys.down = true;
 
     update(1/60);
 
-    assertEqual(player.flipState, FLIP_STATE_LAID_BACK, 'Should advance to next flip state');
+    assertEqual(player.state, PLAYER_STATE.LAID_BACK, 'Should advance to next flip state');
 });
 
 test('Flip: should cycle through all flip states', () => {
@@ -307,22 +308,22 @@ test('Flip: should cycle through all flip states', () => {
     player.z = 10;
     gameSpeed = MIN_FLIP_SPEED + 1;
 
-    player.flipState = FLIP_STATE_UPRIGHT;
+    player.state = PLAYER_STATE.UPRIGHT;
     keys.down = true;
     update(1/60);
-    assertEqual(player.flipState, FLIP_STATE_LAID_BACK, 'Should be laid back');
+    assertEqual(player.state, PLAYER_STATE.LAID_BACK, 'Should be laid back');
 
     keys.down = true;
     update(1/60);
-    assertEqual(player.flipState, FLIP_STATE_UPSIDE_DOWN, 'Should be upside down');
+    assertEqual(player.state, PLAYER_STATE.UPSIDE_DOWN, 'Should be upside down');
 
     keys.down = true;
     update(1/60);
-    assertEqual(player.flipState, FLIP_STATE_LAID_FORWARD, 'Should be laid forward');
+    assertEqual(player.state, PLAYER_STATE.LAID_FORWARD, 'Should be laid forward');
 
     keys.down = true;
     update(1/60);
-    assertEqual(player.flipState, FLIP_STATE_UPRIGHT, 'Should cycle back to upright');
+    assertEqual(player.state, PLAYER_STATE.UPRIGHT, 'Should cycle back to upright');
 });
 
 test('Flip: should count completed flips', () => {
@@ -344,19 +345,19 @@ test('Flip: should not flip when speed is too low', () => {
     setupPlayer();
     player.z = 10; // Airborne
     gameSpeed = MIN_FLIP_SPEED - 0.5; // Below minimum
-    player.flipState = FLIP_STATE_UPRIGHT;
+    player.state = PLAYER_STATE.UPRIGHT;
     keys.down = true;
 
     update(1/60);
 
-    assertEqual(player.flipState, FLIP_STATE_UPRIGHT, 'Should not flip at low speed');
+    assertEqual(player.state, PLAYER_STATE.UPRIGHT, 'Should not flip at low speed');
 });
 
 test('Flip: landing upright after flip should award bonus', () => {
     setupPlayer();
     const initialScore = score;
     player.z = 1;
-    player.flipState = FLIP_STATE_UPRIGHT;
+    player.state = PLAYER_STATE.UPRIGHT;
     player.flipsCompleted = 2;
     player.dz = -10; // Moving down
 
@@ -370,7 +371,7 @@ test('Flip: landing upright after flip should award bonus', () => {
 test('Flip: landing non-upright should trigger crash', () => {
     setupPlayer();
     player.z = 1;
-    player.flipState = FLIP_STATE_LAID_BACK; // Not upright
+    player.state = PLAYER_STATE.LAID_BACK; // Not upright
     player.crashed = false;
     player.dz = -10;
 
