@@ -148,9 +148,9 @@ const CRUMB_LIFETIME = 60;
 const PLAYER_STATE = {
   UPRIGHT: 0,
   LAID_BACK: 1,
-  UPSIDE_DOWN: 2,
+  BACKSIDE_INVERTED: 2,
   LAID_FORWARD: 3,
-  BACKWARDS: 4,
+  BACKSIDE: 4,
 };
 
 const FLIP_ROTATION_LAID_BACK = -0.5;
@@ -187,7 +187,7 @@ const MIN_GRIND_SPEED = 2; // Minimum speed when grinding
 const FLIP_STATES = [
   PLAYER_STATE.UPRIGHT,
   PLAYER_STATE.LAID_BACK,
-  PLAYER_STATE.UPSIDE_DOWN,
+  PLAYER_STATE.BACKSIDE_INVERTED,
   PLAYER_STATE.LAID_FORWARD,
 ];
 
@@ -196,7 +196,7 @@ const GRIND_STATES = [
   PLAYER_STATE.LAID_BACK,
   PLAYER_STATE.UPRIGHT,
   PLAYER_STATE.LAID_FORWARD,
-  PLAYER_STATE.BACKWARDS,
+  PLAYER_STATE.BACKSIDE,
 ];
 const GRIND_TRICK_COOLDOWN = 0.15; // Seconds between flip changes while grinding
 
@@ -430,8 +430,8 @@ function update(deltaTime) {
 
     // Detect flips (transitioning through inverted)
     if (
-      player.state === PLAYER_STATE.UPSIDE_DOWN &&
-      player.lastState !== PLAYER_STATE.UPSIDE_DOWN
+      player.state === PLAYER_STATE.BACKSIDE_INVERTED &&
+      player.lastState !== PLAYER_STATE.BACKSIDE_INVERTED
     ) {
       player.flipsCompleted++;
     }
@@ -635,8 +635,8 @@ function update(deltaTime) {
       player.crashed = true;
       player.crashTimer = CRASH_RECOVERY_FRAMES; // ~1 second recovery at 60fps
       gameSpeed *= CRASH_SPEED_REDUCTION; // Greatly diminish velocity
-      if (player.state === PLAYER_STATE.UPSIDE_DOWN) {
-        hitPlayer(); // Hit if landing upside-down
+      if (player.state === PLAYER_STATE.BACKSIDE_INVERTED) {
+        hitPlayer(); // Hit if landing inverted
       } else {
         crumble(); // Just crumble limbs otherwise
       }
@@ -843,7 +843,7 @@ function hitPlayer(crumbleThreshold = HIT_DODGE_CHANCE) {
   }
   player.hp--;
   player.invul = INVULNERABILITY_FRAMES; // ~2 seconds invulnerability at 60fps
-  player.state = PLAYER_STATE.UPSIDE_DOWN; // womp womp
+  player.state = PLAYER_STATE.BACKSIDE_INVERTED; // womp womp
   shakeAmt = SCREEN_SHAKE_AMOUNT;
 
   // Spawn limb particles

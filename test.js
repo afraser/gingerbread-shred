@@ -315,7 +315,7 @@ test('Flip: should cycle through all flip states', () => {
 
     keys.down = true;
     update(1/60);
-    assertEqual(player.state, PLAYER_STATE.UPSIDE_DOWN, 'Should be upside down');
+    assertEqual(player.state, PLAYER_STATE.BACKSIDE_INVERTED, 'Should be backside inverted');
 
     keys.down = true;
     update(1/60);

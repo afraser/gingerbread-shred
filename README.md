@@ -12,13 +12,13 @@ You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. D
 
 # Ideas / TODO
 
+- Allow rotational tricks off ramps.
 - Bonus for landing on a rail from a ramp jump.
 - Bonus for exiting a rail cleanly.
 - Bonus for exiting a rail cleanly after backslide.
   - Count backslides and multiply same as the flip bonus.
 - Bonus for jumping over an obstacle.
 - Add height attribute to obstacle hit-box and use it to for collision in z-space. (No more bunny hopping trees)
-- Allow rotational tricks off ramps.
 - Name tricks.
 - Log tricks and show them in receipt form at the end.
 - Lodge at the bottom of the hill.

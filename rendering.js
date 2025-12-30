@@ -97,15 +97,15 @@ function drawPlayer(player) {
   } else if (state === PLAYER_STATE.LAID_BACK) {
     // Laid-back position
     drawPlayerLaidBack(hp);
-  } else if (state === PLAYER_STATE.UPSIDE_DOWN) {
-    // Upside-down (facing backward) position
-    drawPlayerUpsideDown(hp);
+  } else if (state === PLAYER_STATE.BACKSIDE_INVERTED) {
+    // Backside inverted (upside-down) position
+    drawPlayerBacksideInverted(hp);
   } else if (state === PLAYER_STATE.LAID_FORWARD) {
     // Laid-forward position
     drawPlayerLaidForward(hp);
-  } else if (state === PLAYER_STATE.BACKWARDS) {
-    // Backwards (facing backward) position
-    drawPlayerBackwards(hp);
+  } else if (state === PLAYER_STATE.BACKSIDE) {
+    // Backside (facing backward) position
+    drawPlayerBackside(hp);
   }
 
   ctx.restore();
@@ -224,7 +224,7 @@ function drawPlayerUpright(hp, c = ctx) {
   c.restore();
 }
 
-function drawPlayerBackwards(hp, c = ctx) {
+function drawPlayerBackside(hp, c = ctx) {
   c.save();
 
   // SNOWBOARD
@@ -279,7 +279,7 @@ function drawPlayerLaidBack(hp, c = ctx) {
   c.restore();
 }
 
-function drawPlayerUpsideDown(hp, c = ctx) {
+function drawPlayerBacksideInverted(hp, c = ctx) {
   // Player completely upside down
   c.save();
 
