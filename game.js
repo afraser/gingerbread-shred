@@ -1198,6 +1198,43 @@ function drawSnowboard(c = ctx) {
   c.stroke();
 }
 
+function drawPlayerHead(headY, c = ctx) {
+  c.fillStyle = C.brown;
+  c.beginPath();
+  c.arc(0, headY, 12, 0, Math.PI * 2);
+  c.fill();
+  c.stroke();
+}
+
+function drawPlayerFace(eyeY, mouthY, c = ctx) {
+  // Eyes
+  c.fillStyle = '#fff';
+  c.beginPath();
+  c.roundRect(-5, eyeY, 3, 5, 2);
+  c.roundRect(2, eyeY, 3, 5, 2);
+  c.fill();
+  // Mouth
+  c.fillStyle = C.red;
+  c.fillRect(-3, mouthY, 6, 2);
+}
+
+function drawPlayerBody(showButtons, c = ctx) {
+  c.fillStyle = C.brown;
+  c.fillRect(-10, -5, 20, 18);
+  c.strokeRect(-10, -5, 20, 18);
+
+  if (showButtons) {
+    // Draw two buttons
+    c.fillStyle = C.green2;
+    c.beginPath();
+    c.arc(0, 0, 2.5, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.arc(0, 8, 2.5, 0, Math.PI * 2);
+    c.fill();
+  }
+}
+
 function drawPlayerUpright(hp, c = ctx) {
   c.save();
 
@@ -1211,20 +1248,8 @@ function drawPlayerUpright(hp, c = ctx) {
     let eyeY = hp === 1 ? 3 : -18;
     let mouthY = hp === 1 ? 11 : -11;
 
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.arc(0, headY, 12, 0, Math.PI * 2); // Head
-    c.fill();
-    c.stroke();
-
-    // Face
-    c.fillStyle = '#fff'; // Eyes
-    c.beginPath();
-    c.roundRect(-5, eyeY, 3, 5, 2);
-    c.roundRect(2, eyeY, 3, 5, 2);
-    c.fill();
-    c.fillStyle = C.red; // Mouth
-    c.fillRect(-3, mouthY, 6, 2);
+    drawPlayerHead(headY, c);
+    drawPlayerFace(eyeY, mouthY, c);
   }
 
   // ARMS
@@ -1262,18 +1287,7 @@ function drawPlayerUpright(hp, c = ctx) {
 
   // TORSO (Draw if HP > 1)
   if (hp > 1) {
-    c.fillStyle = C.brown;
-    // Body
-    c.fillRect(-10, -5, 20, 18);
-    c.strokeRect(-10, -5, 20, 18);
-    // Buttons
-    c.fillStyle = C.green2;
-    c.beginPath();
-    c.arc(0, 0, 2.5, 0, Math.PI * 2);
-    c.fill();
-    c.beginPath();
-    c.arc(0, 8, 2.5, 0, Math.PI * 2);
-    c.fill();
+    drawPlayerBody(true, c);
   }
 
   c.restore();
@@ -1289,12 +1303,8 @@ function drawPlayerBackwards(hp, c = ctx) {
     // HEAD (Always draw unless dead)
     // Position head lower when HP is 1 to sit on snowboard
     let headY = hp === 1 ? 7 : -15;
-
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.arc(0, headY, 12, 0, Math.PI * 2); // Head
-    c.fill();
-    c.stroke();
+    drawPlayerHead(headY, c);
+    // No face shown when facing backwards
   }
 
   // ARMS
@@ -1332,10 +1342,7 @@ function drawPlayerBackwards(hp, c = ctx) {
 
   // TORSO (Draw if HP > 1)
   if (hp > 1) {
-    c.fillStyle = C.brown;
-    // Body
-    c.fillRect(-10, -5, 20, 18);
-    c.strokeRect(-10, -5, 20, 18);
+    drawPlayerBody(false, c); // No buttons when facing backwards
   }
   c.restore();
 }
@@ -1350,20 +1357,8 @@ function drawPlayerLaidBack(hp, c = ctx) {
 
   if (hp > 0) {
     // HEAD - positioned above body
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.arc(0, -20, 12, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
-
-    // Face
-    c.fillStyle = '#fff';
-    c.beginPath();
-    c.roundRect(-5, -23, 3, 5, 2);
-    c.roundRect(2, -23, 3, 5, 2);
-    c.fill();
-    c.fillStyle = C.red;
-    c.fillRect(-3, -15, 6, 2);
+    drawPlayerHead(-20, c);
+    drawPlayerFace(-23, -15, c);
   }
 
   // ARMS - extended outward (draw before torso so they appear behind)
@@ -1399,16 +1394,7 @@ function drawPlayerLaidBack(hp, c = ctx) {
 
   // TORSO & LEGS
   if (hp > 1) {
-    c.fillStyle = C.brown;
-    c.fillRect(-10, -5, 20, 18);
-    c.strokeRect(-10, -5, 20, 18);
-    c.fillStyle = C.green2;
-    c.beginPath();
-    c.arc(0, 0, 2.5, 0, Math.PI * 2);
-    c.fill();
-    c.beginPath();
-    c.arc(0, 8, 2.5, 0, Math.PI * 2);
-    c.fill();
+    drawPlayerBody(true, c);
   }
 
   c.restore();
@@ -1426,12 +1412,8 @@ function drawPlayerUpsideDown(hp, c = ctx) {
   if (hp > 0) {
     // HEAD - now at bottom when rotated
     let headY = hp === 1 ? 3 : -15;
-
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.arc(0, headY, 12, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
+    drawPlayerHead(headY, c);
+    // No face shown when upside down
   }
 
   // ARMS (draw before torso so they appear behind)
@@ -1467,9 +1449,7 @@ function drawPlayerUpsideDown(hp, c = ctx) {
 
   // TORSO & LEGS
   if (hp > 1) {
-    c.fillStyle = C.brown;
-    c.fillRect(-10, -5, 20, 18);
-    c.strokeRect(-10, -5, 20, 18);
+    drawPlayerBody(false, c); // No buttons when upside down
   }
 
   c.restore();
@@ -1486,20 +1466,8 @@ function drawPlayerLaidForward(hp, c = ctx) {
 
   if (hp > 0) {
     // HEAD - positioned above body
-    c.fillStyle = C.brown;
-    c.beginPath();
-    c.arc(0, -20, 12, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
-
-    // Face
-    c.fillStyle = '#fff';
-    c.beginPath();
-    c.roundRect(-5, -23, 3, 5, 2);
-    c.roundRect(2, -23, 3, 5, 2);
-    c.fill();
-    c.fillStyle = C.red;
-    c.fillRect(-3, -15, 6, 2);
+    drawPlayerHead(-20, c);
+    drawPlayerFace(-23, -15, c);
   }
 
   // ARMS - tucked in forward (draw before torso so they appear behind)
@@ -1535,16 +1503,7 @@ function drawPlayerLaidForward(hp, c = ctx) {
 
   // TORSO & LEGS
   if (hp > 1) {
-    c.fillStyle = C.brown;
-    c.fillRect(-10, -5, 20, 18);
-    c.strokeRect(-10, -5, 20, 18);
-    c.fillStyle = C.green2;
-    c.beginPath();
-    c.arc(0, 0, 2.5, 0, Math.PI * 2);
-    c.fill();
-    c.beginPath();
-    c.arc(0, 8, 2.5, 0, Math.PI * 2);
-    c.fill();
+    drawPlayerBody(true, c);
   }
 
   c.restore();
