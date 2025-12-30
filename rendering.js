@@ -98,7 +98,7 @@ function drawPlayer(player) {
     // Laid-back position
     drawPlayerLaidBack(hp);
   } else if (state === PLAYER_STATE.BACKSIDE_INVERTED) {
-    // Backside inverted (upside-down) position
+    // Backside inverted (upside-down, backside showing) position
     drawPlayerBacksideInverted(hp);
   } else if (state === PLAYER_STATE.LAID_FORWARD) {
     // Laid-forward position
@@ -106,6 +106,9 @@ function drawPlayer(player) {
   } else if (state === PLAYER_STATE.BACKSIDE) {
     // Backside (facing backward) position
     drawPlayerBackside(hp);
+  } else if (state === PLAYER_STATE.INVERTED) {
+    // Inverted (upside-down, face showing) position
+    drawPlayerInverted(hp);
   }
 
   ctx.restore();
@@ -280,7 +283,7 @@ function drawPlayerLaidBack(hp, c = ctx) {
 }
 
 function drawPlayerBacksideInverted(hp, c = ctx) {
-  // Player completely upside down
+  // Player completely upside down (backside showing)
   c.save();
 
   c.rotate(Math.PI); // 180 degrees
@@ -292,7 +295,7 @@ function drawPlayerBacksideInverted(hp, c = ctx) {
     // HEAD - now at bottom when rotated
     let headY = hp === 1 ? 3 : -15;
     drawPlayerHead(headY, c);
-    // No face shown when upside down
+    // No face shown when upside down backside
   }
 
   // ARMS (draw before torso so they appear behind)
@@ -303,7 +306,40 @@ function drawPlayerBacksideInverted(hp, c = ctx) {
 
   // TORSO & LEGS
   if (hp > 1) {
-    drawPlayerBody(false, c); // No buttons when upside down
+    drawPlayerBody(false, c); // No buttons when backside showing
+  }
+
+  c.restore();
+}
+
+function drawPlayerInverted(hp, c = ctx) {
+  // Player completely upside down (face showing)
+  c.save();
+
+  c.rotate(Math.PI); // 180 degrees
+
+  // SNOWBOARD
+  drawSnowboard(c);
+
+  if (hp > 0) {
+    // HEAD - now at bottom when rotated
+    let headY = hp === 1 ? 3 : -15;
+    let eyeY = hp === 1 ? -1 : -18;
+    let mouthY = hp === 1 ? 7 : -11;
+
+    drawPlayerHead(headY, c);
+    drawPlayerFace(eyeY, mouthY, c); // Show face when inverted facing forward
+  }
+
+  // ARMS (draw before torso so they appear behind)
+  drawPlayerArms(hp, c);
+
+  // FEET (Draw behind torso)
+  drawPlayerFeet(hp, c);
+
+  // TORSO & LEGS
+  if (hp > 1) {
+    drawPlayerBody(true, c); // Show buttons when facing forward
   }
 
   c.restore();

@@ -112,6 +112,9 @@
     <h2>Player - HP Variations (Backside)</h2>
     <div class="sprite-grid" id="player-hp-backside"></div>
 
+    <h2>Player - HP Variations (Inverted)</h2>
+    <div class="sprite-grid" id="player-hp-inverted"></div>
+
     <h2>Obstacles - Rocks</h2>
     <div class="sprite-grid" id="rocks"></div>
 
@@ -226,6 +229,7 @@
             { name: 'Backside Inverted', fn: (c) => drawPlayerBacksideInverted(4, c) },
             { name: 'Laid Forward', fn: (c) => drawPlayerLaidForward(4, c) },
             { name: 'Backside', fn: (c) => drawPlayerBackside(4, c) },
+            { name: 'Inverted', fn: (c) => drawPlayerInverted(4, c) },
 
         ];
 
@@ -253,6 +257,13 @@
         for (let hp = 4; hp >= 0; hp--) {
             const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerBackside(hp, c), `HP ${hp}`, `${hp}/4 HP`);
             hpBacksideContainer.appendChild(sprite);
+        }
+
+        // Render Player HP Variations (Inverted)
+        const hpInvertedContainer = document.getElementById('player-hp-inverted');
+        for (let hp = 4; hp >= 0; hp--) {
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerInverted(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpInvertedContainer.appendChild(sprite);
         }
 
         // Render Rocks
