@@ -3,7 +3,6 @@
 // All rendering/drawing functions for the game
 // Requires: ctx, C (color palette), PLAYER_STATE constants from game.js
 
-
 function drawTouchIndicators(x, y) {
   const horizontalDrag = touch.startX - touch.currentX;
   const verticalDrag = touch.startY - touch.currentY;
@@ -378,31 +377,32 @@ function drawRamp(x, y, c = ctx) {
 }
 
 function drawRail(x, y, c = ctx) {
+  c.save();
+  // Support posts (horizontal, holding up the vertical rail)
+  c.fillStyle = C.grey;
+  c.fillRect(x - 5, y + 50, 19, 4);
+  c.fillRect(x - 5, y + 150, 19, 4);
+  c.fillRect(x - 5, y + 250, 19, 4);
+
   // Shadow (elongated vertically)
   c.fillStyle = 'rgba(0,0,0,0.2)';
   c.beginPath();
-  c.ellipse(x + 10, y + 160, 8, 140, 0, 0, Math.PI * 2);
+  c.roundRect(x + 6, y + 10, 6, 300, 3);
   c.fill();
-
-  // Support posts (horizontal, holding up the vertical rail)
-  c.fillStyle = C.grey;
-  c.fillRect(x - 4, y + 50, 20, 4);
-  c.strokeRect(x - 4, y + 50, 20, 4);
-  c.fillRect(x - 4, y + 150, 20, 4);
-  c.strokeRect(x - 4, y + 150, 20, 4);
-  c.fillRect(x - 4, y + 250, 20, 4);
-  c.strokeRect(x - 4, y + 250, 20, 4);
 
   // Rail bar (vertical, the grindable part)
   c.fillStyle = '#ffcc00'; // Yellow/gold color
   c.strokeStyle = C.black;
-  c.lineWidth = 2;
-  c.fillRect(x, y, 6, 300);
-  c.strokeRect(x, y, 6, 300);
+  c.lineWidth = 1;
+  c.beginPath();
+  c.roundRect(x, y, 6, 300, 3);
+  c.fill();
+  c.stroke();
 
   // Shine effect on rail (vertical stripe)
   c.fillStyle = 'rgba(255, 255, 255, 0.4)';
-  c.fillRect(x, y, 2, 300);
+  c.fillRect(x + 1, y, 1.5, 300);
+  c.restore();
 }
 
 function drawTree(x, y, variant = 1, c = ctx) {
