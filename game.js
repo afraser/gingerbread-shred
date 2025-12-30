@@ -154,15 +154,6 @@ const FLIP_STATE_LAID_FORWARD = 3;
 const FLIP_ROTATION_LAID_BACK = -0.5;
 const FLIP_ROTATION_LAID_FORWARD = 0.5;
 
-// Grind flip cycle: laid-back → upright → laid-forward → upright
-const GRIND_FLIP_CYCLE = [
-  FLIP_STATE_LAID_BACK,
-  FLIP_STATE_UPRIGHT,
-  FLIP_STATE_LAID_FORWARD,
-  FLIP_STATE_UPRIGHT,
-];
-const GRIND_FLIP_COOLDOWN = 0.15; // Seconds between flip changes while grinding
-
 // HP States
 const HP_FULL = 4;
 const HP_NO_ARM = 3;
@@ -185,9 +176,19 @@ const OBSTACLE_TYPES = {
 const RAIL_HEIGHT = 6; // Z height of the rail
 const RAIL_GRIND_TOLERANCE = 0.5; // How close to rail height to initiate grind
 const GRIND_START_MULTIPLIER = 10; // Velocity multiplier for starting a grind
-const GRIND_START_EXPONENT = 3; // Exponent for grind starting bonus
+const GRIND_START_EXPONENT = 4; // Exponent for grind starting bonus
 const GRIND_POINTS_PER_DISTANCE = 2; // Base points per pixel traveled
 const GRIND_SPEED_MULTIPLIER = 5; // Multiplier for gameSpeed bonus
+const MIN_GRIND_SPEED = 2; // Minimum speed when grinding
+
+// Grind trick cycle: laid-back → upright → laid-forward → upright
+const GRIND_FLIP_CYCLE = [
+  FLIP_STATE_LAID_BACK,
+  FLIP_STATE_UPRIGHT,
+  FLIP_STATE_LAID_FORWARD,
+  FLIP_STATE_UPRIGHT,
+];
+const GRIND_FLIP_COOLDOWN = 0.15; // Seconds between flip changes while grinding
 
 // Game State
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
@@ -292,17 +293,15 @@ function updateStartScreenInstructions() {
   if (isTouchDevice) {
     startScreen.innerHTML = `
             <h1>GINGERBREAD SHRED</h1>
-            <p>Drag to Steer & Control Speed</p>
-            <p>Double-Tap to Pause</p>
             <br>
             <p class="blink">${getStartText()}</p>
         `;
   } else {
     startScreen.innerHTML = `
             <h1>GINGERBREAD SHRED</h1>
-            <p>Arrow Keys to Steer</p>
-            <p>Up/Down to Control Speed</p>
-            <p>ESC to Pause</p>
+            <p>Arrow keys: Move</p>
+            <p>Space: Jump</p>
+            <p>Esc: Pause</p>
             <br>
             <p class="blink">${getStartText()}</p>
         `;
@@ -811,8 +810,8 @@ function update(deltaTime) {
       player.flipState = GRIND_FLIP_CYCLE[0]; // Start with laid-back
 
       // Accelerate if starting grind with low speed
-      if (gameSpeed < 3) {
-        gameSpeed = 3;
+      if (gameSpeed < MIN_GRIND_SPEED) {
+        gameSpeed = MIN_GRIND_SPEED;
       }
 
       const grindStartBonus = Math.floor(
@@ -1802,6 +1801,8 @@ function updateButtonVisibility() {
     document.getElementById('btn-up'),
     document.getElementById('btn-down'),
     document.getElementById('btn-pause'),
+    document.getElementById('btn-jump-left'),
+    document.getElementById('btn-jump-right'),
   ];
 
   buttons.forEach((btn) => {
@@ -1870,6 +1871,8 @@ const btnRight = document.getElementById('btn-right');
 const btnUp = document.getElementById('btn-up');
 const btnDown = document.getElementById('btn-down');
 const btnPause = document.getElementById('btn-pause');
+const btnJumpLeft = document.getElementById('btn-jump-left');
+const btnJumpRight = document.getElementById('btn-jump-right');
 
 if (btnLeft && btnRight && btnUp && btnDown && btnPause) {
   addDirectionButtonListeners(btnLeft, 'left');
@@ -1896,4 +1899,47 @@ if (btnLeft && btnRight && btnUp && btnDown && btnPause) {
     setPauseScreen();
     updateButtonVisibility();
   });
+
+  // Jump buttons
+  if (btnJumpLeft) {
+    btnJumpLeft.addEventListener(
+      'touchstart',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (gameState === 'PLAYING') {
+          player.dz = 6;
+        }
+      },
+      { passive: false }
+    );
+
+    btnJumpLeft.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (gameState === 'PLAYING') {
+        player.dz = 6;
+      }
+    });
+  }
+
+  if (btnJumpRight) {
+    btnJumpRight.addEventListener(
+      'touchstart',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (gameState === 'PLAYING') {
+          player.dz = 6;
+        }
+      },
+      { passive: false }
+    );
+
+    btnJumpRight.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (gameState === 'PLAYING') {
+        player.dz = 6;
+      }
+    });
+  }
 }

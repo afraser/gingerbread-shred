@@ -121,6 +121,14 @@
             top: 4px;
             right: 4px;
         }
+        #btn-jump-left {
+            bottom: calc(60px + 8px + 4px);
+            left: 4px;
+        }
+        #btn-jump-right {
+            bottom: calc(60px + 8px + 4px);
+            right: 4px;
+        }
     </style>
 </head>
 <body>
@@ -129,11 +137,7 @@
     <canvas id="gameCanvas"></canvas>
     <div id="ui">SCORE: 0</div>
     <div id="startScreen">
-        <h1>GINGERBREAD SHRED</h1>
-        <p>Arrows or Drag to Steer & Speed</p>
-        <p>Double-Tap to Pause</p>
-        <br>
-        <p class="blink">TAP OR PRESS SPACE TO START</p>
+        <!-- Content will be set by updateStartScreenInstructions() based on device type -->
     </div>
 
     <!-- Mobile Control Buttons -->
@@ -160,6 +164,18 @@
     <button id="btn-pause" class="control-btn">
         <svg viewBox="0 0 24 24" fill="white">
             <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+        </svg>
+    </button>
+    <button id="btn-jump-left" class="control-btn">
+        <svg viewBox="0 0 24 24" fill="white">
+            <path d="M7 14l5-5 5 5"/>
+            <path d="M7 18l5-5 5 5"/>
+        </svg>
+    </button>
+    <button id="btn-jump-right" class="control-btn">
+        <svg viewBox="0 0 24 24" fill="white">
+            <path d="M7 14l5-5 5 5"/>
+            <path d="M7 18l5-5 5 5"/>
         </svg>
     </button>
 </div>
