@@ -1188,10 +1188,7 @@ function drawPlayer(player) {
   ctx.restore();
 }
 
-function drawPlayerUpright(hp, c = ctx) {
-  c.save();
-
-  // SNOWBOARD
+function drawSnowboard(c = ctx) {
   c.fillStyle = C.red;
   c.beginPath();
   c.roundRect(-20, 15, 40, 10, 10);
@@ -1199,6 +1196,13 @@ function drawPlayerUpright(hp, c = ctx) {
   c.strokeStyle = C.black;
   c.lineWidth = 2;
   c.stroke();
+}
+
+function drawPlayerUpright(hp, c = ctx) {
+  c.save();
+
+  // SNOWBOARD
+  drawSnowboard(c);
 
   if (hp > 0) {
     // HEAD (Always draw unless dead)
@@ -1279,13 +1283,7 @@ function drawPlayerBackwards(hp, c = ctx) {
   c.save();
 
   // SNOWBOARD
-  c.fillStyle = C.red;
-  c.beginPath();
-  c.roundRect(-20, 15, 40, 10, 10);
-  c.fill();
-  c.strokeStyle = C.black;
-  c.lineWidth = 2;
-  c.stroke();
+  drawSnowboard(c);
 
   if (hp > 0) {
     // HEAD (Always draw unless dead)
@@ -1348,13 +1346,7 @@ function drawPlayerLaidBack(hp, c = ctx) {
   c.rotate(FLIP_ROTATION_LAID_BACK); // Lean back
 
   // SNOWBOARD
-  c.fillStyle = C.red;
-  c.beginPath();
-  c.roundRect(-20, 15, 40, 10, 10);
-  c.fill();
-  c.strokeStyle = C.black;
-  c.lineWidth = 2;
-  c.stroke();
+  drawSnowboard(c);
 
   if (hp > 0) {
     // HEAD - positioned above body
@@ -1429,13 +1421,7 @@ function drawPlayerUpsideDown(hp, c = ctx) {
   c.rotate(Math.PI); // 180 degrees
 
   // SNOWBOARD
-  c.fillStyle = C.red;
-  c.beginPath();
-  c.roundRect(-20, 15, 40, 10, 10);
-  c.fill();
-  c.strokeStyle = C.black;
-  c.lineWidth = 2;
-  c.stroke();
+  drawSnowboard(c);
 
   if (hp > 0) {
     // HEAD - now at bottom when rotated
@@ -1496,13 +1482,7 @@ function drawPlayerLaidForward(hp, c = ctx) {
   c.rotate(FLIP_ROTATION_LAID_FORWARD); // Lean forward
 
   // SNOWBOARD
-  c.fillStyle = C.red;
-  c.beginPath();
-  c.roundRect(-20, 15, 40, 10, 10);
-  c.fill();
-  c.strokeStyle = C.black;
-  c.lineWidth = 2;
-  c.stroke();
+  drawSnowboard(c);
 
   if (hp > 0) {
     // HEAD - positioned above body
