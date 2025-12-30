@@ -355,14 +355,14 @@ function init() {
   // Reset Player
   player = {
     x: canvas.width / 2, // Screen position (stays centered)
-    y: PLAYER_Y,
-    w: PLAYER_WIDTH,
+    y: PLAYER_Y, // y position on screen fixed except when jumping.
+    w: PLAYER_WIDTH, // Hitbox width
     h: PLAYER_HEIGHT, // Hitbox is small here because we only care if feet/board hit
     worldX: 0, // Position in world space
     angle: 0, // Direction angle (-1 to 1, 0 is straight down)
     dx: 0, // Horizontal velocity in world space
     hp: INITIAL_HP, // 4:Full, 3:NoArm, 2:NoArms, 1:HeadOnly
-    invul: 0,
+    invul: 0, // Invulnerability timer
     z: 0, // Jump height
     dz: 0, // Jump velocity
     state: PLAYER_STATE.UPRIGHT, // Current player orientation
@@ -466,7 +466,7 @@ function update(deltaTime) {
       for (let i = 0; i < MOVEMENT_PARTICLE_COUNT; i++) {
         particles.push(
           createMovementParticle(
-            player.worldX + PLAYER_WIDTH,
+            player.worldX + player.w,
             gameSpeed * 0.3 + Math.random() * 2
           )
         );
@@ -866,7 +866,7 @@ function createParticle(worldX, y, dx, dy, w, h, color, rot, rSpeed, life) {
  */
 function createBrakeParticle() {
   return createParticle(
-    player.worldX + Math.random() * PLAYER_WIDTH,
+    player.worldX + Math.random() * player.w,
     player.y + BRAKE_PARTICLE_Y_OFFSET,
     (Math.random() - 0.5) * 5 + player.dx,
     BRAKE_PARTICLE_DY,
