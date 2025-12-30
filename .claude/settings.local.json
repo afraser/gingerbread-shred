@@ -5,7 +5,10 @@
       "Bash(git commit:*)",
       "Bash(open index.html)",
       "Bash(open test.html)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(echo:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)"
     ]
   }
 }

@@ -70,7 +70,8 @@
         <div id="startScreen"></div>
     </div>
 
-    <!-- Load game.js first to get access to checkCollision and other functions -->
+    <!-- Load rendering functions first, then game logic -->
+    <script src="rendering.js"></script>
     <script src="game.js"></script>
 
     <!-- Override console.log to capture output -->
