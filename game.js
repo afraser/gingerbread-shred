@@ -183,7 +183,7 @@ const GRIND_POINTS_PER_DISTANCE = 2; // Base points per pixel traveled
 const GRIND_SPEED_MULTIPLIER = 5; // Multiplier for gameSpeed bonus
 const MIN_GRIND_SPEED = 2; // Minimum speed when grinding
 
-// State cycle for airborne tricks: upright → laid-back → upside-down → laid-forward
+// State cycle for airborne tricks
 const FLIP_STATES = [
   PLAYER_STATE.UPRIGHT,
   PLAYER_STATE.LAID_BACK,
@@ -191,14 +191,14 @@ const FLIP_STATES = [
   PLAYER_STATE.LAID_FORWARD,
 ];
 
-// Grind trick cycle: laid-back → upright → laid-forward → upright
-const GRIND_FLIP_CYCLE = [
+// State cycle for grind tricks
+const GRIND_STATES = [
   PLAYER_STATE.LAID_BACK,
   PLAYER_STATE.UPRIGHT,
   PLAYER_STATE.LAID_FORWARD,
-  PLAYER_STATE.UPRIGHT,
+  PLAYER_STATE.BACKWARDS,
 ];
-const GRIND_FLIP_COOLDOWN = 0.15; // Seconds between flip changes while grinding
+const GRIND_TRICK_COOLDOWN = 0.15; // Seconds between flip changes while grinding
 
 // Game State
 let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
@@ -366,7 +366,6 @@ function init() {
     z: 0, // Jump height
     dz: 0, // Jump velocity
     state: PLAYER_STATE.UPRIGHT, // Current player orientation
-    flipIndex: 0, // Current index in FLIP_STATES array
     lastState: PLAYER_STATE.UPRIGHT, // Track previous state to detect completed rotations
     flipsCompleted: 0, // Count full rotations while airborne
     crashed: false,
@@ -374,8 +373,7 @@ function init() {
     grinding: false, // Is player currently grinding a rail?
     grindingRail: null, // Reference to the rail being ground
     grindDistance: 0, // Distance traveled while grinding (for scoring)
-    grindFlipIndex: 0, // Current index in the grind flip cycle
-    grindFlipCooldown: 0, // Cooldown timer for flip changes while grinding
+    grindTrickCooldown: 0, // Cooldown timer for flip changes while grinding
   };
 
   obstacles = [];
@@ -417,14 +415,16 @@ function update(deltaTime) {
   // Flip controls when airborne (only at reasonable speed)
   if (player.z > 0 && gameSpeed >= MIN_FLIP_SPEED && !player.grinding) {
     // Down arrow advances flip, Up arrow reverses flip
+    const flipStateIndex = FLIP_STATES.indexOf(player.state);
     if (keys.down) {
-      player.flipIndex = (player.flipIndex + 1) % FLIP_STATES.length;
-      player.state = FLIP_STATES[player.flipIndex];
+      const nextIndex = (flipStateIndex + 1) % FLIP_STATES.length;
+      player.state = FLIP_STATES[nextIndex];
       keys.down = false; // Consume the key press
     }
     if (keys.up) {
-      player.flipIndex = (player.flipIndex - 1 + FLIP_STATES.length) % FLIP_STATES.length;
-      player.state = FLIP_STATES[player.flipIndex];
+      const prevIndex =
+        (flipStateIndex - 1 + FLIP_STATES.length) % FLIP_STATES.length;
+      player.state = FLIP_STATES[prevIndex];
       keys.up = false; // Consume the key press
     }
 
@@ -572,7 +572,6 @@ function update(deltaTime) {
       player.grindingRail = null;
       player.grindDistance = 0;
       player.state = PLAYER_STATE.UPRIGHT; // Reset to upright when leaving rail
-      player.flipIndex = 0;
     } else {
       // Check if still colliding with rail
       const playerBox = {
@@ -621,22 +620,21 @@ function update(deltaTime) {
           }
         }
 
-        // Handle grind flip cycling with up/down arrows
-        player.grindFlipCooldown -= deltaTime;
-        if (player.grindFlipCooldown <= 0) {
+        // Handle grind trick cycling with up/down arrows
+        player.grindTrickCooldown -= deltaTime;
+        if (player.grindTrickCooldown <= 0) {
+          const grindStateIndex = GRIND_STATES.indexOf(player.state);
           if (keys.up) {
-            // Cycle forward: laid-back → upright → laid-forward → upright
-            player.grindFlipIndex =
-              (player.grindFlipIndex + 1) % GRIND_FLIP_CYCLE.length;
-            player.state = GRIND_FLIP_CYCLE[player.grindFlipIndex];
-            player.grindFlipCooldown = GRIND_FLIP_COOLDOWN;
+            // Cycle forward
+            const nextIndex = (grindStateIndex + 1) % GRIND_STATES.length;
+            player.state = GRIND_STATES[nextIndex];
+            player.grindTrickCooldown = GRIND_TRICK_COOLDOWN;
           } else if (keys.down) {
             // Cycle backward
-            player.grindFlipIndex =
-              (player.grindFlipIndex - 1 + GRIND_FLIP_CYCLE.length) %
-              GRIND_FLIP_CYCLE.length;
-            player.state = GRIND_FLIP_CYCLE[player.grindFlipIndex];
-            player.grindFlipCooldown = GRIND_FLIP_COOLDOWN;
+            const prevIndex =
+              (grindStateIndex - 1 + GRIND_STATES.length) % GRIND_STATES.length;
+            player.state = GRIND_STATES[prevIndex];
+            player.grindTrickCooldown = GRIND_TRICK_COOLDOWN;
           }
         }
       } else {
@@ -662,10 +660,7 @@ function update(deltaTime) {
     player.y = PLAYER_Y; // Reset Y position when landing
 
     // Check for successful flip landing
-    if (
-      player.state === PLAYER_STATE.UPRIGHT &&
-      player.flipsCompleted > 0
-    ) {
+    if (player.state === PLAYER_STATE.UPRIGHT && player.flipsCompleted > 0) {
       // Award bonus: points per flip
       const flipBonus = player.flipsCompleted * FLIP_BONUS_POINTS;
       score += flipBonus;
@@ -699,7 +694,6 @@ function update(deltaTime) {
     if (player.crashTimer === 0) {
       player.crashed = false;
       player.state = PLAYER_STATE.UPRIGHT; // Return to upright
-      player.flipIndex = 0;
     }
   }
 
@@ -823,9 +817,8 @@ function update(deltaTime) {
       player.z = RAIL_HEIGHT; // Lock to rail height
       player.dz = 0; // Stop falling
       player.grindDistance = 0; // Reset distance tracker
-      player.grindFlipIndex = 0; // Start at first position in cycle
-      player.grindFlipCooldown = 0; // Reset cooldown
-      player.state = GRIND_FLIP_CYCLE[0]; // Start with laid-back
+      player.grindTrickCooldown = 0; // Reset cooldown
+      player.state = GRIND_STATES[0]; // Start with laid-back
 
       // Accelerate if starting grind with low speed
       if (gameSpeed < MIN_GRIND_SPEED) {
@@ -847,7 +840,6 @@ function update(deltaTime) {
       player.grindingRail = null;
       player.grindDistance = 0;
       player.state = PLAYER_STATE.UPRIGHT; // Reset to upright when leaving rail
-      player.flipIndex = 0;
     }
 
     // Cleanup - remove if off top of screen
@@ -888,6 +880,7 @@ function hitPlayer(crumbleThreshold = HIT_DODGE_CHANCE) {
   }
   player.hp--;
   player.invul = INVULNERABILITY_FRAMES; // ~2 seconds invulnerability at 60fps
+  player.state = PLAYER_STATE.UPSIDE_DOWN; // womp womp
   shakeAmt = SCREEN_SHAKE_AMOUNT;
 
   // Spawn limb particles
@@ -1174,15 +1167,6 @@ function drawPlayer(player) {
   ctx.ellipse(0, 25 + z, 20, 8, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Draw Snowboard
-  ctx.fillStyle = C.red;
-  ctx.beginPath();
-  ctx.roundRect(-20, 15, 40, 10, 10);
-  ctx.fill();
-  ctx.strokeStyle = C.black;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
   // Draw player based on state
   if (state === PLAYER_STATE.UPRIGHT) {
     // Upright (normal) position
@@ -1205,6 +1189,17 @@ function drawPlayer(player) {
 }
 
 function drawPlayerUpright(hp, c = ctx) {
+  c.save();
+
+  // SNOWBOARD
+  c.fillStyle = C.red;
+  c.beginPath();
+  c.roundRect(-20, 15, 40, 10, 10);
+  c.fill();
+  c.strokeStyle = C.black;
+  c.lineWidth = 2;
+  c.stroke();
+
   if (hp > 0) {
     // HEAD (Always draw unless dead)
     // Position head lower when HP is 1 to sit on snowboard
@@ -1276,9 +1271,22 @@ function drawPlayerUpright(hp, c = ctx) {
     c.arc(0, 8, 2.5, 0, Math.PI * 2);
     c.fill();
   }
+
+  c.restore();
 }
 
 function drawPlayerBackwards(hp, c = ctx) {
+  c.save();
+
+  // SNOWBOARD
+  c.fillStyle = C.red;
+  c.beginPath();
+  c.roundRect(-20, 15, 40, 10, 10);
+  c.fill();
+  c.strokeStyle = C.black;
+  c.lineWidth = 2;
+  c.stroke();
+
   if (hp > 0) {
     // HEAD (Always draw unless dead)
     // Position head lower when HP is 1 to sit on snowboard
@@ -1331,12 +1339,22 @@ function drawPlayerBackwards(hp, c = ctx) {
     c.fillRect(-10, -5, 20, 18);
     c.strokeRect(-10, -5, 20, 18);
   }
+  c.restore();
 }
 
 function drawPlayerLaidBack(hp, c = ctx) {
   // Player leaning back, body tilted backward
   c.save();
   c.rotate(FLIP_ROTATION_LAID_BACK); // Lean back
+
+  // SNOWBOARD
+  c.fillStyle = C.red;
+  c.beginPath();
+  c.roundRect(-20, 15, 40, 10, 10);
+  c.fill();
+  c.strokeStyle = C.black;
+  c.lineWidth = 2;
+  c.stroke();
 
   if (hp > 0) {
     // HEAD - positioned above body
@@ -1407,7 +1425,17 @@ function drawPlayerLaidBack(hp, c = ctx) {
 function drawPlayerUpsideDown(hp, c = ctx) {
   // Player completely upside down
   c.save();
+
   c.rotate(Math.PI); // 180 degrees
+
+  // SNOWBOARD
+  c.fillStyle = C.red;
+  c.beginPath();
+  c.roundRect(-20, 15, 40, 10, 10);
+  c.fill();
+  c.strokeStyle = C.black;
+  c.lineWidth = 2;
+  c.stroke();
 
   if (hp > 0) {
     // HEAD - now at bottom when rotated
@@ -1464,7 +1492,17 @@ function drawPlayerUpsideDown(hp, c = ctx) {
 function drawPlayerLaidForward(hp, c = ctx) {
   // Player leaning forward, body tilted forward
   c.save();
+
   c.rotate(FLIP_ROTATION_LAID_FORWARD); // Lean forward
+
+  // SNOWBOARD
+  c.fillStyle = C.red;
+  c.beginPath();
+  c.roundRect(-20, 15, 40, 10, 10);
+  c.fill();
+  c.strokeStyle = C.black;
+  c.lineWidth = 2;
+  c.stroke();
 
   if (hp > 0) {
     // HEAD - positioned above body
@@ -1599,6 +1637,7 @@ function drawRail(x, y, c = ctx) {
 }
 
 function drawTree(x, y, variant = 1, c = ctx) {
+  c.save();
   // Shift entire tree up to include trunk in hitbox
   y -= 10;
 
@@ -1677,6 +1716,7 @@ function drawTree(x, y, variant = 1, c = ctx) {
     c.fillStyle = C.brown;
     c.fillRect(x + 10, y + 20, 10, 10);
   }
+  c.restore();
 }
 
 function drawRock(x, y, variant = 1, c = ctx) {
