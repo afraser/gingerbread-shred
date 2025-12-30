@@ -1122,7 +1122,15 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight') keys.right = true;
   if (e.code === 'ArrowDown') keys.down = true;
   if (e.code === 'ArrowUp') keys.up = true;
-  if (e.code === 'Space' && player.z === 0) player.dz = 6; // JUMP!
+  if (e.code === 'Space') {
+    if (player.z === 0) {
+      player.dz = 6; // JUMP!
+    } else if (player.grinding) {
+      player.dz = 5;
+      player.grinding = false;
+      player.grindingRail = null;
+    }
+  }
   if (e.code === 'Escape') {
     if (gameState === 'PLAYING') {
       gameState = 'PAUSED';
@@ -1258,41 +1266,18 @@ function addDirectionButtonListeners(button, direction) {
     { passive: false }
   );
 
-  // Handle touchend - release button
-  button.addEventListener(
-    'touchend',
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      button.classList.remove('pressed');
-      keys[direction] = false;
-    },
-    { passive: false }
-  );
-
-  // Handle touchcancel - release button if touch is cancelled
-  button.addEventListener(
-    'touchcancel',
-    (e) => {
-      e.preventDefault();
-      button.classList.remove('pressed');
-      keys[direction] = false;
-    },
-    { passive: false }
-  );
-
-  // Desktop testing with mouse
-  button.addEventListener('mousedown', (e) => {
+  const releaseButton = (e) => {
     e.preventDefault();
-    button.classList.add('pressed');
-    keys[direction] = true;
-  });
-
-  button.addEventListener('mouseup', (e) => {
-    e.preventDefault();
+    e.stopPropagation();
     button.classList.remove('pressed');
     keys[direction] = false;
-  });
+  };
+
+  // Handle touchend - release button
+  button.addEventListener('touchend', releaseButton, { passive: false });
+
+  // Handle touchcancel - release button if touch is cancelled
+  button.addEventListener('touchcancel', releaseButton, { passive: false });
 }
 
 // Helper function to add event listeners to a jump button
@@ -1302,19 +1287,18 @@ function addJumpButtonListeners(button) {
     (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (gameState === 'PLAYING' && player.z === 0) {
-        player.dz = 6;
+      if (gameState === 'PLAYING') {
+        if (player.z === 0) {
+          player.dz = 6; // JUMP!
+        } else if (player.grinding) {
+          player.dz = 5;
+          player.grinding = false;
+          player.grindingRail = null;
+        }
       }
     },
     { passive: false }
   );
-
-  button.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    if (gameState === 'PLAYING' && player.z === 0) {
-      player.dz = 6;
-    }
-  });
 }
 
 // Set up button event listeners (only if buttons exist - e.g., not on sprites page)
@@ -1344,13 +1328,6 @@ if (btnLeft && btnRight && btnUp && btnDown && btnPause) {
     },
     { passive: false }
   );
-
-  btnPause.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    gameState = 'PAUSED';
-    setPauseScreen();
-    updateButtonVisibility();
-  });
 
   // Jump buttons
   if (btnJumpLeft) {
