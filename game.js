@@ -587,12 +587,12 @@ function update(deltaTime) {
         player.grindTrickCooldown -= deltaTime;
         if (player.grindTrickCooldown <= 0) {
           const grindStateIndex = GRIND_STATES.indexOf(player.state);
-          if (keys.up) {
+          if (keys.left) {
             // Cycle forward
             const nextIndex = (grindStateIndex + 1) % GRIND_STATES.length;
             player.state = GRIND_STATES[nextIndex];
             player.grindTrickCooldown = GRIND_TRICK_COOLDOWN;
-          } else if (keys.down) {
+          } else if (keys.right) {
             // Cycle backward
             const prevIndex =
               (grindStateIndex - 1 + GRIND_STATES.length) % GRIND_STATES.length;
