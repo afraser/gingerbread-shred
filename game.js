@@ -453,21 +453,8 @@ function update(deltaTime) {
 
     // Snow cloud effect when braking
     if (gameSpeed > SCOOT_THRESHOLD && Math.random() < 0.3) {
-      // Spawn snow particles beneath the snowboard
       for (let i = 0; i < BRAKE_PARTICLE_COUNT; i++) {
-        particles.push({
-          worldX: player.worldX + Math.random() * PLAYER_WIDTH, // Across full snowboard width
-          y: player.y + BRAKE_PARTICLE_Y_OFFSET, // Below the snowboard
-          dx: (Math.random() - 0.5) * 5 + player.dx,
-          dy: BRAKE_PARTICLE_DY,
-          w: BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
-          h: BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
-          color: '#fff',
-          rot: 0,
-          rSpeed: 0,
-          life:
-            BRAKE_PARTICLE_MIN_LIFE + Math.random() * BRAKE_PARTICLE_MAX_LIFE, // Short lifetime
-        });
+        particles.push(createBrakeParticle());
       }
     }
   }
@@ -477,48 +464,24 @@ function update(deltaTime) {
     // Turning left - particles spray out the right side
     if (keys.left && Math.random() < 0.3) {
       for (let i = 0; i < MOVEMENT_PARTICLE_COUNT; i++) {
-        particles.push({
-          worldX: player.worldX + PLAYER_WIDTH, // Right side of board
-          y: player.y + 10 + Math.random() * 10,
-          dx: gameSpeed * 0.3 + Math.random() * 2, // Spray to the right, faster with speed
-          dy: -1 - Math.random() * 2,
-          w:
-            MOVEMENT_PARTICLE_MIN_SIZE +
-            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
-          h:
-            MOVEMENT_PARTICLE_MIN_SIZE +
-            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
-          color: '#fff',
-          rot: 0,
-          rSpeed: 0,
-          life:
-            MOVEMENT_PARTICLE_MIN_LIFE +
-            Math.random() * MOVEMENT_PARTICLE_MAX_LIFE,
-        });
+        particles.push(
+          createMovementParticle(
+            player.worldX + PLAYER_WIDTH,
+            gameSpeed * 0.3 + Math.random() * 2
+          )
+        );
       }
     }
 
     // Turning right - particles spray out the left side
     if (keys.right && Math.random() < 0.3) {
       for (let i = 0; i < MOVEMENT_PARTICLE_COUNT; i++) {
-        particles.push({
-          worldX: player.worldX, // Left side of board
-          y: player.y + 10 + Math.random() * 10,
-          dx: -gameSpeed * 0.3 - Math.random() * 2, // Spray to the left, faster with speed
-          dy: -1 - Math.random() * 2,
-          w:
-            MOVEMENT_PARTICLE_MIN_SIZE +
-            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
-          h:
-            MOVEMENT_PARTICLE_MIN_SIZE +
-            Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
-          color: '#fff',
-          rot: 0,
-          rSpeed: 0,
-          life:
-            MOVEMENT_PARTICLE_MIN_LIFE +
-            Math.random() * MOVEMENT_PARTICLE_MAX_LIFE,
-        });
+        particles.push(
+          createMovementParticle(
+            player.worldX,
+            -gameSpeed * 0.3 - Math.random() * 2
+          )
+        );
       }
     }
   }
@@ -891,35 +854,90 @@ function hitPlayer(crumbleThreshold = HIT_DODGE_CHANCE) {
   }
 }
 
+/**
+ * Helper function to create a particle object
+ */
+function createParticle(worldX, y, dx, dy, w, h, color, rot, rSpeed, life) {
+  return { worldX, y, dx, dy, w, h, color, rot, rSpeed, life };
+}
+
+/**
+ * Create a brake particle (snow cloud effect)
+ */
+function createBrakeParticle() {
+  return createParticle(
+    player.worldX + Math.random() * PLAYER_WIDTH,
+    player.y + BRAKE_PARTICLE_Y_OFFSET,
+    (Math.random() - 0.5) * 5 + player.dx,
+    BRAKE_PARTICLE_DY,
+    BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
+    BRAKE_PARTICLE_MIN_SIZE + Math.random() * BRAKE_PARTICLE_MAX_SIZE,
+    '#fff',
+    0,
+    0,
+    BRAKE_PARTICLE_MIN_LIFE + Math.random() * BRAKE_PARTICLE_MAX_LIFE
+  );
+}
+
+/**
+ * Create a movement particle (turning spray)
+ */
+function createMovementParticle(worldX, dx) {
+  return createParticle(
+    worldX,
+    player.y + 10 + Math.random() * 10,
+    dx,
+    -1 - Math.random() * 2,
+    MOVEMENT_PARTICLE_MIN_SIZE + Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
+    MOVEMENT_PARTICLE_MIN_SIZE + Math.random() * MOVEMENT_PARTICLE_MAX_SIZE,
+    '#fff',
+    0,
+    0,
+    MOVEMENT_PARTICLE_MIN_LIFE + Math.random() * MOVEMENT_PARTICLE_MAX_LIFE
+  );
+}
+
+/**
+ * Create a crumble chunk particle
+ */
+function createCrumbleChunk() {
+  return createParticle(
+    player.worldX,
+    player.y,
+    (Math.random() - 0.5) * 10,
+    (Math.random() - 0.5) * 10 - 5,
+    CHUNK_SIZE,
+    CHUNK_SIZE,
+    C.brown,
+    0,
+    (Math.random() - 0.5) * 0.5,
+    CHUNK_LIFETIME
+  );
+}
+
+/**
+ * Create a crumb particle
+ */
+function createCrumb() {
+  return createParticle(
+    player.worldX,
+    player.y,
+    (Math.random() - 0.5) * 15,
+    (Math.random() - 0.5) * 15,
+    CRUMB_SIZE,
+    CRUMB_SIZE,
+    C.brown,
+    0,
+    0,
+    CRUMB_LIFETIME
+  );
+}
+
 /** Throw crumb particles. */
 function crumble() {
-  // Generate a "chunk"
-  particles.push({
-    worldX: player.worldX,
-    y: player.y,
-    dx: (Math.random() - 0.5) * 10,
-    dy: (Math.random() - 0.5) * 10 - 5,
-    w: CHUNK_SIZE,
-    h: CHUNK_SIZE,
-    color: C.brown,
-    rot: 0,
-    rSpeed: (Math.random() - 0.5) * 0.5,
-    life: CHUNK_LIFETIME,
-  });
-  // Generate crumbs
+  particles.push(createCrumbleChunk());
   for (let i = 0; i < CRUMB_COUNT; i++) {
-    particles.push({
-      worldX: player.worldX,
-      y: player.y,
-      dx: (Math.random() - 0.5) * 15,
-      dy: (Math.random() - 0.5) * 15,
-      w: CRUMB_SIZE,
-      h: CRUMB_SIZE,
-      color: C.brown,
-      rot: 0,
-      rSpeed: 0,
-      life: CRUMB_LIFETIME,
-    });
+    particles.push(createCrumb());
   }
 }
 
@@ -1277,6 +1295,28 @@ function addDirectionButtonListeners(button, direction) {
   });
 }
 
+// Helper function to add event listeners to a jump button
+function addJumpButtonListeners(button) {
+  button.addEventListener(
+    'touchstart',
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (gameState === 'PLAYING') {
+        player.dz = 6;
+      }
+    },
+    { passive: false }
+  );
+
+  button.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    if (gameState === 'PLAYING') {
+      player.dz = 6;
+    }
+  });
+}
+
 // Set up button event listeners (only if buttons exist - e.g., not on sprites page)
 const btnLeft = document.getElementById('btn-left');
 const btnRight = document.getElementById('btn-right');
@@ -1314,44 +1354,10 @@ if (btnLeft && btnRight && btnUp && btnDown && btnPause) {
 
   // Jump buttons
   if (btnJumpLeft) {
-    btnJumpLeft.addEventListener(
-      'touchstart',
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (gameState === 'PLAYING') {
-          player.dz = 6;
-        }
-      },
-      { passive: false }
-    );
-
-    btnJumpLeft.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      if (gameState === 'PLAYING') {
-        player.dz = 6;
-      }
-    });
+    addJumpButtonListeners(btnJumpLeft);
   }
 
   if (btnJumpRight) {
-    btnJumpRight.addEventListener(
-      'touchstart',
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (gameState === 'PLAYING') {
-          player.dz = 6;
-        }
-      },
-      { passive: false }
-    );
-
-    btnJumpRight.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      if (gameState === 'PLAYING') {
-        player.dz = 6;
-      }
-    });
+    addJumpButtonListeners(btnJumpRight);
   }
 }
