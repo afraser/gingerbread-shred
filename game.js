@@ -1302,7 +1302,7 @@ function addJumpButtonListeners(button) {
     (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (gameState === 'PLAYING') {
+      if (gameState === 'PLAYING' && player.z === 0) {
         player.dz = 6;
       }
     },
@@ -1311,7 +1311,7 @@ function addJumpButtonListeners(button) {
 
   button.addEventListener('mousedown', (e) => {
     e.preventDefault();
-    if (gameState === 'PLAYING') {
+    if (gameState === 'PLAYING' && player.z === 0) {
       player.dz = 6;
     }
   });
