@@ -62,6 +62,7 @@ const ACCELERATION_RATE = 0.05;
 const ACCELERATION_Z_THRESHOLD = 2; // Disable acceleration when above this Z height. We use a small number here to allow accelerating out of a bunny hop.
 const BRAKE_RATE = 0.15;
 const STEERING_RATE = 0.06;
+const AIRBORNE_STEERING_RATE = 0.03;
 const LATERAL_VELOCITY_MULTIPLIER = 1.5;
 const ANGLE_CLAMP_MIN = -2;
 const ANGLE_CLAMP_MAX = 2;
@@ -72,8 +73,9 @@ const SCOOT_HOP_VELOCITY = 3;
 // Game Mechanics
 const INITIAL_GAME_SPEED = 3;
 const INITIAL_HP = 4;
-const MIN_FLIP_SPEED = 2;
+const MIN_FLIP_SPEED = 1.7;
 const CRASH_SPEED_REDUCTION = 0.3;
+const STUMBLE_SPEED_REDUCTION = 0.6;
 const CRASH_RECOVERY_FRAMES = 60; // ~1 second at 60fps
 const INVULNERABILITY_FRAMES = 120; // ~2 seconds at 60fps
 const HIT_DODGE_CHANCE = 0.5;
@@ -156,6 +158,12 @@ const PLAYER_STATE = {
   BACKSIDE_LAID_FORWARD: 7,
 };
 
+const isInverted = (state) =>
+  state === PLAYER_STATE.INVERTED || state === PLAYER_STATE.BACKSIDE_INVERTED;
+
+const isPerfectlyUpright = (state) =>
+  state === PLAYER_STATE.UPRIGHT || state === PLAYER_STATE.BACKSIDE;
+
 const FLIP_ROTATION_LAID_BACK = -0.5;
 const FLIP_ROTATION_LAID_FORWARD = 0.5;
 
@@ -192,6 +200,36 @@ const FLIP_STATES = [
   PLAYER_STATE.LAID_BACK,
   PLAYER_STATE.BACKSIDE_INVERTED,
   PLAYER_STATE.LAID_FORWARD,
+];
+
+// 2D Rotation Grid for ramp jumps
+// Vertical axis (up/down): rotation stages (upright -> laid back -> inverted -> laid forward)
+// Horizontal axis (left/right): frontside (0) vs backside (1)
+const ROTATION_GRID = [
+  [
+    PLAYER_STATE.UPRIGHT,
+    PLAYER_STATE.BACKSIDE_LAID_FORWARD,
+    PLAYER_STATE.BACKSIDE,
+    PLAYER_STATE.LAID_BACK,
+  ], // Vertical index 0
+  [
+    PLAYER_STATE.LAID_BACK,
+    PLAYER_STATE.BACKSIDE_LAID_FORWARD,
+    PLAYER_STATE.BACKSIDE_LAID_BACK,
+    PLAYER_STATE.LAID_FORWARD,
+  ], // Vertical index 1
+  [
+    PLAYER_STATE.BACKSIDE_INVERTED,
+    PLAYER_STATE.LAID_FORWARD,
+    PLAYER_STATE.INVERTED,
+    PLAYER_STATE.BACKSIDE_LAID_BACK,
+  ], // Vertical index 2
+  [
+    PLAYER_STATE.LAID_FORWARD,
+    PLAYER_STATE.BACKSIDE_LAID_FORWARD,
+    PLAYER_STATE.BACKSIDE_LAID_BACK,
+    PLAYER_STATE.LAID_BACK,
+  ], // Vertical index 3
 ];
 
 // State cycle for grind tricks
@@ -301,6 +339,25 @@ function getTouchCoordinates(e) {
   };
 }
 
+/**
+ * Sync rotation coordinates from current player state
+ * Finds the current state in the rotation grid and updates rotationVertical/Horizontal
+ */
+function syncRotationFromState() {
+  for (let v = 0; v < ROTATION_GRID.length; v++) {
+    for (let h = 0; h < ROTATION_GRID[v].length; h++) {
+      if (ROTATION_GRID[v][h] === player.state) {
+        player.rotationVertical = v;
+        player.rotationHorizontal = h;
+        return;
+      }
+    }
+  }
+  // Default to upright frontside if state not found
+  player.rotationVertical = 0;
+  player.rotationHorizontal = 0;
+}
+
 // Update start screen based on device type
 function updateStartScreenInstructions() {
   if (isTouchDevice) {
@@ -371,6 +428,8 @@ function init() {
     state: PLAYER_STATE.UPRIGHT, // Current player orientation
     lastState: PLAYER_STATE.UPRIGHT, // Track previous state to detect completed rotations
     flipsCompleted: 0, // Count full rotations while airborne
+    rotationVertical: 0, // 2D rotation: vertical axis (0-3: upright, laid back, inverted, laid forward)
+    rotationHorizontal: 0, // 2D rotation: horizontal axis (0=frontside, 1=backside)
     crashed: false,
     crashTimer: 0,
     grinding: false, // Is player currently grinding a rail?
@@ -415,27 +474,45 @@ function update(deltaTime) {
   // Touch input is now handled via on-screen buttons
   // (see touchstart/touchend event handlers)
 
-  // Flip controls when airborne (only at reasonable speed)
+  // 2D Rotation controls when airborne (only at reasonable speed)
   if (player.z > 0 && gameSpeed >= MIN_FLIP_SPEED && !player.grinding) {
-    // Down arrow advances flip, Up arrow reverses flip
-    const flipStateIndex = FLIP_STATES.indexOf(player.state);
+    // Up/Down arrows: vertical rotation (upright -> laid back -> inverted -> laid forward)
     if (keys.down) {
-      const nextIndex = (flipStateIndex + 1) % FLIP_STATES.length;
-      player.state = FLIP_STATES[nextIndex];
+      player.rotationVertical =
+        (player.rotationVertical + 1) % ROTATION_GRID.length;
+      player.state =
+        ROTATION_GRID[player.rotationVertical][player.rotationHorizontal];
       keys.down = false; // Consume the key press
     }
     if (keys.up) {
-      const prevIndex =
-        (flipStateIndex - 1 + FLIP_STATES.length) % FLIP_STATES.length;
-      player.state = FLIP_STATES[prevIndex];
+      player.rotationVertical =
+        (player.rotationVertical - 1 + ROTATION_GRID.length) %
+        ROTATION_GRID.length;
+      player.state =
+        ROTATION_GRID[player.rotationVertical][player.rotationHorizontal];
       keys.up = false; // Consume the key press
     }
 
-    // Detect flips (transitioning through inverted)
-    if (
-      player.state === PLAYER_STATE.BACKSIDE_INVERTED &&
-      player.lastState !== PLAYER_STATE.BACKSIDE_INVERTED
-    ) {
+    // Left/Right arrows: horizontal flip (frontside <-> backside)
+    if (keys.left) {
+      player.rotationHorizontal =
+        (player.rotationHorizontal + 1) %
+        ROTATION_GRID[player.rotationVertical].length;
+      player.state =
+        ROTATION_GRID[player.rotationVertical][player.rotationHorizontal];
+      keys.left = false; // Consume the key press
+    }
+    if (keys.right) {
+      player.rotationHorizontal =
+        (player.rotationHorizontal + 1) %
+        ROTATION_GRID[player.rotationVertical].length;
+      player.state =
+        ROTATION_GRID[player.rotationVertical][player.rotationHorizontal];
+      keys.right = false; // Consume the key press
+    }
+
+    // Detect flips (transitioning through inverted states)
+    if (isInverted(player.state) && !isInverted(player.lastState)) {
       player.flipsCompleted++;
     }
 
@@ -512,8 +589,20 @@ function update(deltaTime) {
     player.dx = 0;
   } else {
     // Normal steering: adjust angle based on left/right
-    if (keys.left) player.angle -= STEERING_RATE * deltaTime * 60;
-    if (keys.right) player.angle += STEERING_RATE * deltaTime * 60;
+    if (keys.left) {
+      if (player.z > 0) {
+        player.angle -= AIRBORNE_STEERING_RATE * deltaTime * 60;
+      } else {
+        player.angle -= STEERING_RATE * deltaTime * 60;
+      }
+    }
+    if (keys.right) {
+      if (player.z > 0) {
+        player.angle += AIRBORNE_STEERING_RATE * deltaTime * 60;
+      } else {
+        player.angle += STEERING_RATE * deltaTime * 60;
+      }
+    }
 
     player.angle *= ANGLE_DECAY; // Angle decay
     player.angle = Math.max(
@@ -626,7 +715,7 @@ function update(deltaTime) {
     player.y = PLAYER_Y; // Reset Y position when landing
 
     // Check for successful flip landing
-    if (player.state === PLAYER_STATE.UPRIGHT && player.flipsCompleted > 0) {
+    if (isPerfectlyUpright(player.state) && player.flipsCompleted > 0) {
       // Award bonus: points per flip
       const flipBonus = player.flipsCompleted * FLIP_BONUS_POINTS;
       score += flipBonus;
@@ -634,20 +723,22 @@ function update(deltaTime) {
     }
 
     // Check for crash landing (landing in non-upright state)
-    if (player.state !== PLAYER_STATE.UPRIGHT && !player.crashed) {
+    if (!isPerfectlyUpright(player.state) && !player.crashed) {
       player.crashed = true;
       player.crashTimer = CRASH_RECOVERY_FRAMES; // ~1 second recovery at 60fps
-      gameSpeed *= CRASH_SPEED_REDUCTION; // Greatly diminish velocity
-      if (player.state === PLAYER_STATE.BACKSIDE_INVERTED) {
+      if (isInverted(player.state)) {
+        gameSpeed *= CRASH_SPEED_REDUCTION;
         hitPlayer(); // Hit if landing inverted
       } else {
+        gameSpeed *= STUMBLE_SPEED_REDUCTION;
         crumble(); // Just crumble limbs otherwise
       }
+      player.lastState = PLAYER_STATE.UPRIGHT;
     }
 
     // Reset flip tracking on landing
     player.flipsCompleted = 0;
-    player.lastState = PLAYER_STATE.UPRIGHT;
+    syncRotationFromState(); // Sync rotation coordinates with current state
   }
   cameraX = player.worldX;
 
@@ -688,6 +779,7 @@ function update(deltaTime) {
       // 12.5% chance: rail
       type = 'rail';
     }
+    type = rand < 0.7 ? 'ramp' : 'rail';
 
     // Spawn in world coordinates around the visible area
     const worldXPos =
@@ -763,7 +855,8 @@ function update(deltaTime) {
           showBonus(jumpBonus);
           // Reset flip tracking when taking off
           player.flipsCompleted = 0;
-          player.lastState = PLAYER_STATE.UPRIGHT;
+          player.lastState = player.state; // Preserve current state
+          syncRotationFromState(); // Sync rotation coordinates with current state
           o.active = false;
         } else {
           hitPlayer();
@@ -773,6 +866,7 @@ function update(deltaTime) {
     } else if (
       !player.grinding &&
       player.z > 0 &&
+      !isInverted(player.state) &&
       player.z < RAIL_HEIGHT + RAIL_GRIND_TOLERANCE &&
       o.type === 'rail' &&
       checkCollision(playerBox, obstacleBox)
@@ -784,7 +878,7 @@ function update(deltaTime) {
       player.dz = 0; // Stop falling
       player.grindDistance = 0; // Reset distance tracker
       player.grindTrickCooldown = 0; // Reset cooldown
-      player.state = GRIND_STATES[0]; // Start with laid-back
+      // player.state = GRIND_STATES[0]; // Start with laid-back
 
       // Accelerate if starting grind with low speed
       if (gameSpeed < MIN_GRIND_SPEED) {

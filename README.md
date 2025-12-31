@@ -12,7 +12,6 @@ You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. D
 
 # Ideas / TODO
 
-- Allow rotational tricks off ramps.
 - Bonus for landing on a rail from a ramp jump.
 - Bonus for exiting a rail cleanly.
 - Bonus for exiting a rail cleanly after backslide.
@@ -32,11 +31,11 @@ You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. D
 - New crash behavior:
   - Lost body part is dropped as an obstacle on the hill.
 - Add a longer rail variant.
-- prevent rails from s
 - Leaderboard
 - Cliffs!
   - Must be able to enter from top & sides
   - When player hit-box occludes 50% in either dimension initiate a fall (z = player height at cliff entry point)
+  - OR if player hits the side of a cliff hitbox then crumble() AND fall?
 - Levels / Trails
   1. Implement min/max X-position: Render trees and/or stakes with pink tape along the edges.
   2. Make a level builder
