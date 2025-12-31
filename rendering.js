@@ -92,28 +92,20 @@ function drawPlayer(player) {
 
   // Draw player based on state
   if (state === PLAYER_STATE.UPRIGHT) {
-    // Upright (normal) position
     drawPlayerUpright(hp);
   } else if (state === PLAYER_STATE.LAID_BACK) {
-    // Laid-back position
     drawPlayerLaidBack(hp);
   } else if (state === PLAYER_STATE.BACKSIDE_INVERTED) {
-    // Backside inverted (upside-down, backside showing) position
     drawPlayerBacksideInverted(hp);
   } else if (state === PLAYER_STATE.LAID_FORWARD) {
-    // Laid-forward position
     drawPlayerLaidForward(hp);
   } else if (state === PLAYER_STATE.BACKSIDE) {
-    // Backside (facing backward) position
     drawPlayerBackside(hp);
   } else if (state === PLAYER_STATE.INVERTED) {
-    // Inverted (upside-down, face showing) position
     drawPlayerInverted(hp);
   } else if (state === PLAYER_STATE.BACKSIDE_LAID_BACK) {
-    // Backside laid back (leaning back, backside showing) position
     drawPlayerBacksideLaidBack(hp);
   } else if (state === PLAYER_STATE.BACKSIDE_LAID_FORWARD) {
-    // Backside laid forward (leaning forward, backside showing) position
     drawPlayerBacksideLaidForward(hp);
   }
 
@@ -168,7 +160,7 @@ function drawPlayerBody(showButtons, c = ctx) {
 }
 
 function drawPlayerArms(hp, c = ctx) {
-  // Left Arm (Draw if HP > 2)
+  // Left Arm
   if (hp > 2) {
     c.fillStyle = C.brown;
     c.beginPath();
@@ -176,7 +168,7 @@ function drawPlayerArms(hp, c = ctx) {
     c.fill();
     c.stroke();
   }
-  // Right Arm (Draw if HP > 3)
+  // Right Arm
   if (hp > 3) {
     c.fillStyle = C.brown;
     c.beginPath();
@@ -225,7 +217,7 @@ function drawPlayerUpright(hp, c = ctx) {
   // FEET (Draw behind torso)
   drawPlayerFeet(hp, c);
 
-  // TORSO (Draw if HP > 1)
+  // TORSO
   if (hp > 1) {
     drawPlayerBody(true, c);
   }
@@ -253,7 +245,7 @@ function drawPlayerBackside(hp, c = ctx) {
   // FEET (Draw behind torso)
   drawPlayerFeet(hp, c);
 
-  // TORSO (Draw if HP > 1)
+  // TORSO
   if (hp > 1) {
     drawPlayerBody(false, c); // No buttons when facing backwards
   }
