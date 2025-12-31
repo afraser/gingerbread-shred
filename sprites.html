@@ -106,14 +106,26 @@
     <h2>Player - HP Variations (Upright)</h2>
     <div class="sprite-grid" id="player-hp-states"></div>
 
-    <h2>Player - HP Variations (Backside Inverted)</h2>
-    <div class="sprite-grid" id="player-hp-backside-inverted"></div>
+    <h2>Player - HP Variations (Laid Back)</h2>
+    <div class="sprite-grid" id="player-hp-laid-back"></div>
+
+    <h2>Player - HP Variations (Laid Forward)</h2>
+    <div class="sprite-grid" id="player-hp-laid-forward"></div>
+
+    <h2>Player - HP Variations (Inverted)</h2>
+    <div class="sprite-grid" id="player-hp-inverted"></div>
 
     <h2>Player - HP Variations (Backside)</h2>
     <div class="sprite-grid" id="player-hp-backside"></div>
 
-    <h2>Player - HP Variations (Inverted)</h2>
-    <div class="sprite-grid" id="player-hp-inverted"></div>
+    <h2>Player - HP Variations (Backside Laid Back)</h2>
+    <div class="sprite-grid" id="player-hp-backside-laid-back"></div>
+
+    <h2>Player - HP Variations (Backside Laid Forward)</h2>
+    <div class="sprite-grid" id="player-hp-backside-laid-forward"></div>
+
+    <h2>Player - HP Variations (Backside Inverted)</h2>
+    <div class="sprite-grid" id="player-hp-backside-inverted"></div>
 
     <h2>Obstacles - Rocks</h2>
     <div class="sprite-grid" id="rocks"></div>
@@ -226,10 +238,12 @@
         const playerStates = [
             { name: 'Upright', fn: (c) => drawPlayerUpright(4, c) },
             { name: 'Laid Back', fn: (c) => drawPlayerLaidBack(4, c) },
-            { name: 'Backside Inverted', fn: (c) => drawPlayerBacksideInverted(4, c) },
             { name: 'Laid Forward', fn: (c) => drawPlayerLaidForward(4, c) },
-            { name: 'Backside', fn: (c) => drawPlayerBackside(4, c) },
             { name: 'Inverted', fn: (c) => drawPlayerInverted(4, c) },
+            { name: 'Backside', fn: (c) => drawPlayerBackside(4, c) },
+            { name: 'Backside Laid Back', fn: (c) => drawPlayerBacksideLaidBack(4, c) },
+            { name: 'Backside Laid Forward', fn: (c) => drawPlayerBacksideLaidForward(4, c) },
+            { name: 'Backside Inverted', fn: (c) => drawPlayerBacksideInverted(4, c) },
 
         ];
 
@@ -245,11 +259,25 @@
             hpStatesContainer.appendChild(sprite);
         }
 
-        // Render Player HP Variations (Backside Inverted)
-        const hpBacksideInvertedContainer = document.getElementById('player-hp-backside-inverted');
+        // Render Player HP Variations (Laid Back)
+        const hpLaidBackContainer = document.getElementById('player-hp-laid-back');
         for (let hp = 4; hp >= 0; hp--) {
-            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerBacksideInverted(hp, c), `HP ${hp}`, `${hp}/4 HP`);
-            hpBacksideInvertedContainer.appendChild(sprite);
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerLaidBack(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpLaidBackContainer.appendChild(sprite);
+        }
+
+        // Render Player HP Variations (Laid Forward)
+        const hpLaidForwardContainer = document.getElementById('player-hp-laid-forward');
+        for (let hp = 4; hp >= 0; hp--) {
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerLaidForward(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpLaidForwardContainer.appendChild(sprite);
+        }
+
+        // Render Player HP Variations (Inverted)
+        const hpInvertedContainer = document.getElementById('player-hp-inverted');
+        for (let hp = 4; hp >= 0; hp--) {
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerInverted(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpInvertedContainer.appendChild(sprite);
         }
 
         // Render Player HP Variations (Backside)
@@ -259,11 +287,25 @@
             hpBacksideContainer.appendChild(sprite);
         }
 
-        // Render Player HP Variations (Inverted)
-        const hpInvertedContainer = document.getElementById('player-hp-inverted');
+        // Render Player HP Variations (Backside Laid Back)
+        const hpBacksideLaidBackContainer = document.getElementById('player-hp-backside-laid-back');
         for (let hp = 4; hp >= 0; hp--) {
-            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerInverted(hp, c), `HP ${hp}`, `${hp}/4 HP`);
-            hpInvertedContainer.appendChild(sprite);
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerBacksideLaidBack(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpBacksideLaidBackContainer.appendChild(sprite);
+        }
+
+        // Render Player HP Variations (Backside Laid Forward)
+        const hpBacksideLaidForwardContainer = document.getElementById('player-hp-backside-laid-forward');
+        for (let hp = 4; hp >= 0; hp--) {
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerBacksideLaidForward(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpBacksideLaidForwardContainer.appendChild(sprite);
+        }
+
+        // Render Player HP Variations (Backside Inverted)
+        const hpBacksideInvertedContainer = document.getElementById('player-hp-backside-inverted');
+        for (let hp = 4; hp >= 0; hp--) {
+            const sprite = createSpriteCanvas(80, 80, (c) => drawPlayerBacksideInverted(hp, c), `HP ${hp}`, `${hp}/4 HP`);
+            hpBacksideInvertedContainer.appendChild(sprite);
         }
 
         // Render Rocks

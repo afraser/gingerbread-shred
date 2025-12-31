@@ -109,6 +109,12 @@ function drawPlayer(player) {
   } else if (state === PLAYER_STATE.INVERTED) {
     // Inverted (upside-down, face showing) position
     drawPlayerInverted(hp);
+  } else if (state === PLAYER_STATE.BACKSIDE_LAID_BACK) {
+    // Backside laid back (leaning back, backside showing) position
+    drawPlayerBacksideLaidBack(hp);
+  } else if (state === PLAYER_STATE.BACKSIDE_LAID_FORWARD) {
+    // Backside laid forward (leaning forward, backside showing) position
+    drawPlayerBacksideLaidForward(hp);
   }
 
   ctx.restore();
@@ -369,6 +375,63 @@ function drawPlayerLaidForward(hp, c = ctx) {
   // TORSO & LEGS
   if (hp > 1) {
     drawPlayerBody(true, c);
+  }
+
+  c.restore();
+}
+
+function drawPlayerBacksideLaidBack(hp, c = ctx) {
+  // Player leaning back, facing backward (backside showing)
+  c.save();
+  c.rotate(FLIP_ROTATION_LAID_BACK); // Lean back
+
+  // SNOWBOARD
+  drawSnowboard(c);
+
+  if (hp > 0) {
+    // HEAD - positioned above body
+    drawPlayerHead(-20, c);
+    // No face shown when facing backward
+  }
+
+  // ARMS (draw before torso so they appear behind)
+  drawPlayerArms(hp, c);
+
+  // FEET (Draw behind torso)
+  drawPlayerFeet(hp, c);
+
+  // TORSO & LEGS
+  if (hp > 1) {
+    drawPlayerBody(false, c); // No buttons when facing backward
+  }
+
+  c.restore();
+}
+
+function drawPlayerBacksideLaidForward(hp, c = ctx) {
+  // Player leaning forward, facing backward (backside showing)
+  c.save();
+
+  c.rotate(FLIP_ROTATION_LAID_FORWARD); // Lean forward
+
+  // SNOWBOARD
+  drawSnowboard(c);
+
+  if (hp > 0) {
+    // HEAD - positioned above body
+    drawPlayerHead(-20, c);
+    // No face shown when facing backward
+  }
+
+  // ARMS (draw before torso so they appear behind)
+  drawPlayerArms(hp, c);
+
+  // FEET (Draw behind torso)
+  drawPlayerFeet(hp, c);
+
+  // TORSO & LEGS
+  if (hp > 1) {
+    drawPlayerBody(false, c); // No buttons when facing backward
   }
 
   c.restore();
