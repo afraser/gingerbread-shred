@@ -74,8 +74,8 @@ const SCOOT_HOP_VELOCITY = 3;
 const INITIAL_GAME_SPEED = 3;
 const INITIAL_HP = 4;
 const MIN_FLIP_SPEED = 1.7;
-const CRASH_SPEED_REDUCTION = 0.3;
-const STUMBLE_SPEED_REDUCTION = 0.6;
+const CRASH_SPEED_MULTIPLIER = 0.3;
+const STUMBLE_SPEED_MULTIPLIER = 0.7;
 const CRASH_RECOVERY_FRAMES = 60; // ~1 second at 60fps
 const INVULNERABILITY_FRAMES = 120; // ~2 seconds at 60fps
 const HIT_DODGE_CHANCE = 0.5;
@@ -727,10 +727,10 @@ function update(deltaTime) {
       player.crashed = true;
       player.crashTimer = CRASH_RECOVERY_FRAMES; // ~1 second recovery at 60fps
       if (isInverted(player.state)) {
-        gameSpeed *= CRASH_SPEED_REDUCTION;
+        gameSpeed *= CRASH_SPEED_MULTIPLIER;
         hitPlayer(); // Hit if landing inverted
       } else {
-        gameSpeed *= STUMBLE_SPEED_REDUCTION;
+        gameSpeed *= STUMBLE_SPEED_MULTIPLIER;
         crumble(); // Just crumble limbs otherwise
       }
       player.lastState = PLAYER_STATE.UPRIGHT;
@@ -1222,6 +1222,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Space') {
     if (player.z === 0) {
       player.dz = 6; // JUMP!
+      if (gameSpeed < 2) gameSpeed += 0.7;
     } else if (player.grinding) {
       player.dz = 5;
       player.grinding = false;
