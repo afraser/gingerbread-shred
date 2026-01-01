@@ -85,6 +85,7 @@ const JUMP_BOOST_MULTIPLIER = 1.5;
 const JUMP_BOOST_BASE = 5;
 const JUMP_BONUS_MULTIPLIER = 100;
 const FLIP_BONUS_POINTS = 5000;
+const ROTATION_BONUS_POINTS = 2500; // Bonus per 180º of spin on jumps
 
 // Scoring
 const SCORE_MULTIPLIER = 1;
@@ -163,6 +164,9 @@ const isInverted = (state) =>
 
 const isPerfectlyUpright = (state) =>
   state === PLAYER_STATE.UPRIGHT || state === PLAYER_STATE.BACKSIDE;
+
+const isBackside = (state) =>
+  state === PLAYER_STATE.BACKSIDE || state === PLAYER_STATE.BACKSIDE_INVERTED;
 
 const FLIP_ROTATION_LAID_BACK = -0.5;
 const FLIP_ROTATION_LAID_FORWARD = 0.5;
@@ -428,6 +432,7 @@ function init() {
     state: PLAYER_STATE.UPRIGHT, // Current player orientation
     lastState: PLAYER_STATE.UPRIGHT, // Track previous state to detect completed rotations
     flipsCompleted: 0, // Count full rotations while airborne
+    halfSpinsCompleted: 0, // Count horizontal rotations (spins) while airborne
     rotationVertical: 0, // 2D rotation: vertical axis (0-3: upright, laid back, inverted, laid forward)
     rotationHorizontal: 0, // 2D rotation: horizontal axis (0=frontside, 1=backside)
     crashed: false,
@@ -514,6 +519,14 @@ function update(deltaTime) {
     // Detect flips (transitioning through inverted states)
     if (isInverted(player.state) && !isInverted(player.lastState)) {
       player.flipsCompleted++;
+    }
+
+    // Detect spins (crossing from frontside to backside or vice versa)
+
+    const wasBackside = isBackside(player.lastState);
+    const nowBackside = isBackside(player.state);
+    if ((wasBackside && !nowBackside) || (!wasBackside && nowBackside)) {
+      player.halfSpinsCompleted++;
     }
 
     player.lastState = player.state;
@@ -715,11 +728,16 @@ function update(deltaTime) {
     player.y = PLAYER_Y; // Reset Y position when landing
 
     // Check for successful flip landing
-    if (isPerfectlyUpright(player.state) && player.flipsCompleted > 0) {
-      // Award bonus: points per flip
+    if (
+      isPerfectlyUpright(player.state) &&
+      (player.flipsCompleted > 0 || player.halfSpinsCompleted > 0)
+    ) {
+      // Award bonus: points per flip + points per rotation
       const flipBonus = player.flipsCompleted * FLIP_BONUS_POINTS;
-      score += flipBonus;
-      showBonus(flipBonus);
+      const rotationBonus = player.halfSpinsCompleted * ROTATION_BONUS_POINTS;
+      const totalBonus = flipBonus + rotationBonus;
+      score += totalBonus;
+      showBonus(totalBonus);
     }
 
     // Check for crash landing (landing in non-upright state)
@@ -736,8 +754,9 @@ function update(deltaTime) {
       player.lastState = PLAYER_STATE.UPRIGHT;
     }
 
-    // Reset flip tracking on landing
+    // Reset flip and rotation tracking on landing
     player.flipsCompleted = 0;
+    player.halfSpinsCompleted = 0;
     syncRotationFromState(); // Sync rotation coordinates with current state
   }
   cameraX = player.worldX;
@@ -852,8 +871,9 @@ function update(deltaTime) {
           const jumpBonus = Math.floor(JUMP_BONUS_MULTIPLIER * gameSpeed);
           score += jumpBonus; // Jump score bonus
           showBonus(jumpBonus);
-          // Reset flip tracking when taking off
+          // Reset flip and rotation tracking when taking off
           player.flipsCompleted = 0;
+          player.halfSpinsCompleted = 0;
           player.lastState = player.state; // Preserve current state
           syncRotationFromState(); // Sync rotation coordinates with current state
           o.active = false;
