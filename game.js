@@ -779,7 +779,6 @@ function update(deltaTime) {
       // 12.5% chance: rail
       type = 'rail';
     }
-    type = rand < 0.7 ? 'ramp' : 'rail';
 
     // Spawn in world coordinates around the visible area
     const worldXPos =
