@@ -270,6 +270,7 @@ let player = {};
 let obstacles = [];
 let particles = [];
 let snow = [];
+let trail = null; // Optional trail definition with width constraints
 
 // --- CANVAS SETUP ---
 
@@ -655,16 +656,20 @@ function update(deltaTime) {
   // Scoot mode: when speed is very low, allow direct left/right movement
   const isScootMode = gameSpeed < SCOOT_THRESHOLD;
 
+  // Calculate trail boundaries if trail is defined
+  const trailLeftBound = trail ? -trail.width / 2 : -Infinity;
+  const trailRightBound = trail ? trail.width / 2 : Infinity;
+
   if (isScootMode) {
     // Scoot left/right by directly moving worldX
-    if (keys.left) {
+    if (keys.left && player.worldX > trailLeftBound) {
       player.worldX -= SCOOT_SPEED * deltaTime;
       // Little hop animation when scooting
       if (player.z === 0) {
         player.dz = SCOOT_HOP_VELOCITY; // Small upward velocity
       }
     }
-    if (keys.right) {
+    if (keys.right && player.worldX < trailRightBound) {
       player.worldX += SCOOT_SPEED * deltaTime;
       // Little hop animation when scooting
       if (player.z === 0) {
@@ -675,14 +680,14 @@ function update(deltaTime) {
     player.dx = 0;
   } else {
     // Normal steering: adjust angle based on left/right
-    if (keys.left) {
+    if (keys.left && player.worldX > trailLeftBound) {
       if (player.z > 0) {
         player.angle -= AIRBORNE_STEERING_RATE * deltaTime * 60;
       } else {
         player.angle -= STEERING_RATE * deltaTime * 60;
       }
     }
-    if (keys.right) {
+    if (keys.right && player.worldX < trailRightBound) {
       if (player.z > 0) {
         player.angle += AIRBORNE_STEERING_RATE * deltaTime * 60;
       } else {
@@ -698,6 +703,11 @@ function update(deltaTime) {
     player.dx = player.angle * gameSpeed * LATERAL_VELOCITY_MULTIPLIER;
 
     player.worldX += player.dx * deltaTime * 60; // Scale movement by deltaTime
+  }
+
+  // Clamp player position to trail bounds if trail is defined
+  if (trail) {
+    player.worldX = Math.max(trailLeftBound, Math.min(trailRightBound, player.worldX));
   }
 
   // Grinding physics
