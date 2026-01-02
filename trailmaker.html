@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gingerbread Shred - Trail Maker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #222;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+        #menuScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+        }
+        h1 {
+            color: #ff004d;
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+        .menu-btn {
+            background: none;
+            border: 2px solid #fff1e8;
+            color: #fff1e8;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px 30px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .menu-btn:hover {
+            background: #ff004d;
+            border-color: #ff004d;
+            color: white;
+            transform: scale(1.05);
+        }
+        .menu-btn:active {
+            transform: scale(0.95);
+        }
+        #editorContainer {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: auto;
+            background: #c2c3c7;
+        }
+        #trailCanvas {
+            display: block;
+            margin: 0 auto;
+            background: #c2c3c7;
+            cursor: crosshair;
+        }
+        #toolbar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #fff1e8;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 100;
+        }
+        .toolbar-title {
+            color: #ff004d;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .obstacle-btn {
+            display: block;
+            width: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #29adff;
+            color: #fff1e8;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .obstacle-btn:hover {
+            background: rgba(41, 173, 255, 0.3);
+            border-color: #fff1e8;
+        }
+        .obstacle-btn.selected {
+            background: #29adff;
+            color: #000;
+        }
+        #saveBtn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #30c873;
+            border: 2px solid #30c873;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px 30px;
+            cursor: pointer;
+            border-radius: 8px;
+            z-index: 100;
+            transition: all 0.2s;
+        }
+        #saveBtn:hover {
+            background: #28a85e;
+            border-color: #28a85e;
+            transform: scale(1.05);
+        }
+        #saveBtn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+<div id="menuScreen">
+    <h1>GINGERBREAD SHRED TRAIL MAKER</h1>
+    <button class="menu-btn" id="btnNewTrail">NEW TRAIL</button>
+    <button class="menu-btn" id="btnLoadTrail">LOAD TRAIL</button>
+</div>
+
+<div id="editorContainer">
+    <canvas id="trailCanvas" width="800" height="12000"></canvas>
+
+    <div id="toolbar">
+        <div class="toolbar-title">OBSTACLES</div>
+        <button class="obstacle-btn" data-type="tree1">Tree 1</button>
+        <button class="obstacle-btn" data-type="tree2">Tree 2</button>
+        <button class="obstacle-btn" data-type="tree3">Tree 3</button>
+        <button class="obstacle-btn" data-type="rock1">Rock 1</button>
+        <button class="obstacle-btn" data-type="rock2">Rock 2</button>
+        <button class="obstacle-btn" data-type="rock3">Rock 3</button>
+        <button class="obstacle-btn" data-type="ramp">Ramp</button>
+        <button class="obstacle-btn" data-type="rail">Rail</button>
+    </div>
+
+    <button id="saveBtn">SAVE TRAIL</button>
+</div>
+
+<script src="trailmaker.js"></script>
+</body>
+</html>
