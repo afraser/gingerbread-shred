@@ -271,9 +271,8 @@ let obstacles = [];
 let particles = [];
 let snow = [];
 let trail = null; // Optional trail definition with width constraints
-trail = {
-  width: 800,
-};
+let currentTrailId = null; // ID of currently loaded trail (for reloading)
+let trailDistance = 0; // Distance traveled down the trail
 
 // --- CANVAS SETUP ---
 
@@ -369,6 +368,8 @@ function syncRotationFromState() {
 // Start free ride mode (no trail constraints)
 function startFreeRide() {
   trail = null;
+  currentTrailId = null;
+  trailDistance = 0;
   init();
   gameState = 'PLAYING';
   startScreen.style.display = 'none';
@@ -382,7 +383,8 @@ function showTrailList() {
   const trailListDiv = document.getElementById('trailList');
 
   if (!window.TRAILS || window.TRAILS.length === 0) {
-    trailListDiv.innerHTML = '<p style="color: #ff004d;">No trails available</p>';
+    trailListDiv.innerHTML =
+      '<p style="color: #ff004d;">No trails available</p>';
     return;
   }
 
@@ -408,6 +410,8 @@ function loadTrail(trailId) {
   }
 
   trail = window.TRAIL_DATA[trailId];
+  currentTrailId = trailId;
+  trailDistance = 0;
 
   // Start the game with the loaded trail
   init();
@@ -416,6 +420,21 @@ function loadTrail(trailId) {
   uiScore.innerText = 'SCORE: 0';
   updateButtonVisibility();
   loop();
+}
+
+// Show trail completion screen
+function showTrailComplete() {
+  const trailInfo = window.TRAILS.find((t) => t.id === currentTrailId);
+  const trailName = trailInfo ? trailInfo.name : 'Unknown Trail';
+
+  startScreen.innerHTML = `
+    <h1 style="color: #30c873;">APRÈS SKI</h1>
+    <p style="font-size: 24px; margin: 20px 0;">${trailName}</p>
+    <p style="font-size: 32px; color: #ff004d;">SCORE: ${Math.floor(score)}</p>
+    <br>
+    <p>Space: Retry Trail</p>
+    <p>Esc: Main Menu</p>
+  `;
 }
 
 // Update start screen based on device type
@@ -433,8 +452,12 @@ function updateStartScreenInstructions() {
   `;
 
   // Add event listeners for menu buttons
-  document.getElementById('btnFreeRide').addEventListener('click', startFreeRide);
-  document.getElementById('btnLoadTrail').addEventListener('click', showTrailList);
+  document
+    .getElementById('btnFreeRide')
+    .addEventListener('click', startFreeRide);
+  document
+    .getElementById('btnLoadTrail')
+    .addEventListener('click', showTrailList);
 }
 
 // Set initial instructions
@@ -595,6 +618,19 @@ function update(deltaTime) {
   score += gameSpeed * deltaTime; // Distance-based scoring
   if (uiScore) {
     uiScore.innerText = 'SCORE: ' + Math.floor(score).toLocaleString();
+  }
+
+  // Track trail progress and check for completion
+  if (trail && trail.length) {
+    trailDistance += gameSpeed; // Accumulate in pixels (matches obstacle movement)
+
+    if (trailDistance >= trail.length) {
+      // Trail completed!
+      gameState = 'TRAIL_COMPLETE';
+      startScreen.style.display = 'flex';
+      showTrailComplete();
+      return;
+    }
   }
 
   // Touch input is now handled via on-screen buttons
@@ -1192,8 +1228,8 @@ function draw() {
 
   // Draw trail boundaries if trail is defined
   if (trail) {
-    const leftBoundScreenX = (-trail.width / 2) - cameraX + canvas.width / 2;
-    const rightBoundScreenX = (trail.width / 2) - cameraX + canvas.width / 2;
+    const leftBoundScreenX = -trail.width / 2 - cameraX + canvas.width / 2;
+    const rightBoundScreenX = trail.width / 2 - cameraX + canvas.width / 2;
 
     ctx.strokeStyle = 'rgba(255, 0, 77, 0.4)'; // Semi-transparent red
     ctx.lineWidth = 3;
@@ -1350,6 +1386,11 @@ window.addEventListener('keydown', (e) => {
       gameState = 'PAUSED';
       setPauseScreen();
       updateButtonVisibility();
+    } else if (gameState === 'TRAIL_COMPLETE') {
+      // Return to menu
+      gameState = 'MENU';
+      startScreen.style.display = 'flex';
+      updateStartScreenInstructions();
     }
   }
 
@@ -1364,6 +1405,11 @@ window.addEventListener('keydown', (e) => {
       gameState = 'MENU';
       startScreen.style.display = 'flex';
       updateStartScreenInstructions();
+    } else if (gameState === 'TRAIL_COMPLETE') {
+      // Reload the same trail
+      if (currentTrailId) {
+        loadTrail(currentTrailId);
+      }
     }
   }
 });
