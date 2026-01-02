@@ -1,0 +1,4 @@
+// List of available trails
+// Add new trail files to this array as you create them
+export const trails = [];
+

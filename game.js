@@ -271,6 +271,9 @@ let obstacles = [];
 let particles = [];
 let snow = [];
 let trail = null; // Optional trail definition with width constraints
+trail = {
+  width: 800,
+};
 
 // --- CANVAS SETUP ---
 
@@ -363,24 +366,75 @@ function syncRotationFromState() {
   player.rotationHorizontal = 0;
 }
 
+// Start free ride mode (no trail constraints)
+function startFreeRide() {
+  trail = null;
+  init();
+  gameState = 'PLAYING';
+  startScreen.style.display = 'none';
+  uiScore.innerText = 'SCORE: 0';
+  updateButtonVisibility();
+  loop();
+}
+
+// Show list of available trails
+function showTrailList() {
+  const trailListDiv = document.getElementById('trailList');
+
+  if (!window.TRAILS || window.TRAILS.length === 0) {
+    trailListDiv.innerHTML = '<p style="color: #ff004d;">No trails available</p>';
+    return;
+  }
+
+  // Display trail buttons
+  let html = '<p>Select a trail:</p>';
+  window.TRAILS.forEach((trailInfo) => {
+    html += `<button class="trail-btn" data-trail="${trailInfo.id}">${trailInfo.name}</button><br>`;
+  });
+  trailListDiv.innerHTML = html;
+
+  // Add click handlers to trail buttons
+  document.querySelectorAll('.trail-btn').forEach((btn) => {
+    btn.addEventListener('click', () => loadTrail(btn.dataset.trail));
+  });
+}
+
+// Load a specific trail
+function loadTrail(trailId) {
+  // Find the trail data from the global TRAIL_DATA object
+  if (!window.TRAIL_DATA || !window.TRAIL_DATA[trailId]) {
+    alert(`Trail "${trailId}" not found`);
+    return;
+  }
+
+  trail = window.TRAIL_DATA[trailId];
+
+  // Start the game with the loaded trail
+  init();
+  gameState = 'PLAYING';
+  startScreen.style.display = 'none';
+  uiScore.innerText = 'SCORE: 0';
+  updateButtonVisibility();
+  loop();
+}
+
 // Update start screen based on device type
 function updateStartScreenInstructions() {
-  if (isTouchDevice) {
-    startScreen.innerHTML = `
-            <h1>GINGERBREAD SHRED</h1>
-            <br>
-            <p class="blink">${getStartText()}</p>
-        `;
-  } else {
-    startScreen.innerHTML = `
-            <h1>GINGERBREAD SHRED</h1>
-            <p>Arrow keys: Move</p>
-            <p>Space: Jump</p>
-            <p>Esc: Pause</p>
-            <br>
-            <p class="blink">${getStartText()}</p>
-        `;
-  }
+  const controlsText = isTouchDevice
+    ? ''
+    : '<p>Arrow keys: Move | Space: Jump | Esc: Pause</p><br>';
+
+  startScreen.innerHTML = `
+    <h1>GINGERBREAD SHRED</h1>
+    ${controlsText}
+    <button class="menu-btn" id="btnFreeRide">FREE RIDE</button>
+    <button class="menu-btn" id="btnLoadTrail">LOAD TRAIL</button>
+    <div id="trailList"></div>
+  `;
+
+  // Add event listeners for menu buttons
+  document.getElementById('btnFreeRide').addEventListener('click', startFreeRide);
+  document.getElementById('btnLoadTrail').addEventListener('click', showTrailList);
 }
 
 // Set initial instructions
@@ -457,13 +511,6 @@ function init() {
       speed: Math.random() * 2 + 1,
     });
   }
-
-  gameState = 'PLAYING';
-  startScreen.style.display = 'none';
-  uiScore.innerText = 'SCORE: 0';
-  updateButtonVisibility();
-
-  loop();
 }
 
 // --- OBSTACLE GENERATION ---
@@ -707,7 +754,10 @@ function update(deltaTime) {
 
   // Clamp player position to trail bounds if trail is defined
   if (trail) {
-    player.worldX = Math.max(trailLeftBound, Math.min(trailRightBound, player.worldX));
+    player.worldX = Math.max(
+      trailLeftBound,
+      Math.min(trailRightBound, player.worldX)
+    );
   }
 
   // Grinding physics
@@ -861,7 +911,10 @@ function update(deltaTime) {
   if (shakeAmt < SCREEN_SHAKE_MIN_THRESHOLD) shakeAmt = 0;
 
   // --- Obstacle Spawner ---
-  spawnRandomObstacle();
+  // Only spawn random obstacles if no trail is defined
+  if (!trail) {
+    spawnRandomObstacle();
+  }
 
   // --- Update Obstacles ---
   for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -1137,6 +1190,30 @@ function draw() {
     }
   });
 
+  // Draw trail boundaries if trail is defined
+  if (trail) {
+    const leftBoundScreenX = (-trail.width / 2) - cameraX + canvas.width / 2;
+    const rightBoundScreenX = (trail.width / 2) - cameraX + canvas.width / 2;
+
+    ctx.strokeStyle = 'rgba(255, 0, 77, 0.4)'; // Semi-transparent red
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 5]); // Dashed line
+
+    // Draw left boundary
+    ctx.beginPath();
+    ctx.moveTo(leftBoundScreenX, 0);
+    ctx.lineTo(leftBoundScreenX, canvas.height);
+    ctx.stroke();
+
+    // Draw right boundary
+    ctx.beginPath();
+    ctx.moveTo(rightBoundScreenX, 0);
+    ctx.lineTo(rightBoundScreenX, canvas.height);
+    ctx.stroke();
+
+    ctx.setLineDash([]); // Reset to solid line for other drawing
+  }
+
   // Player visual bottom for depth sorting
   const playerBottom = player.y + 15;
 
@@ -1282,8 +1359,11 @@ window.addEventListener('keydown', (e) => {
       startScreen.style.display = 'none';
       updateButtonVisibility();
       loop();
-    } else if (gameState === 'MENU' || gameState === 'GAMEOVER') {
-      init();
+    } else if (gameState === 'GAMEOVER') {
+      // Return to menu
+      gameState = 'MENU';
+      startScreen.style.display = 'flex';
+      updateStartScreenInstructions();
     }
   }
 });
@@ -1330,8 +1410,11 @@ window.addEventListener(
       touch.lastTapTime = currentTime;
 
       // Handle menu interactions with single tap
-      if (gameState === 'MENU' || gameState === 'GAMEOVER') {
-        init();
+      if (gameState === 'GAMEOVER') {
+        // Return to menu
+        gameState = 'MENU';
+        startScreen.style.display = 'flex';
+        updateStartScreenInstructions();
       } else if (gameState === 'PAUSED') {
         gameState = 'PLAYING';
         startScreen.style.display = 'none';

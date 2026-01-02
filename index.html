@@ -51,6 +51,51 @@
         p { margin: 5px; color: #fff1e8; }
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #fff1e8;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+            cursor: pointer;
+            padding: 10px 20px;
+            margin: 5px;
+            transition: color 0.2s, transform 0.1s;
+        }
+        .menu-btn:hover {
+            color: #ff004d;
+            transform: scale(1.05);
+        }
+        .menu-btn:active {
+            transform: scale(0.95);
+        }
+        #trailList {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .trail-btn {
+            background: none;
+            border: none;
+            color: #29adff;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+            cursor: pointer;
+            padding: 8px 16px;
+            margin: 3px;
+            transition: color 0.2s, transform 0.1s;
+        }
+        .trail-btn:hover {
+            color: #ff004d;
+            transform: scale(1.05);
+        }
+        .trail-btn:active {
+            transform: scale(0.95);
+        }
         .bonus-text {
             position: absolute;
             font-weight: bold;
@@ -180,6 +225,8 @@
     </button>
 </div>
 
+<script src="trails/index.js"></script>
+<script src="trails/tutorial.js"></script>
 <script src="rendering.js"></script>
 <script src="game.js"></script>
 </body>
