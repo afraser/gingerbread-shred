@@ -465,6 +465,79 @@ function init() {
   loop();
 }
 
+// --- OBSTACLE GENERATION ---
+
+/**
+ * Attempts to spawn a random obstacle based on current game speed and spawn rates.
+ * Ensures new obstacles don't overlap with existing ones.
+ */
+function spawnRandomObstacle() {
+  // Chance to spawn increases slightly with speed
+  if (Math.random() < BASE_SPAWN_CHANCE + gameSpeed / SPAWN_SPEED_DIVISOR) {
+    const rand = Math.random();
+    let type;
+
+    if (rand < TREE_SPAWN_PROBABILITY) {
+      // 50% chance: tree (randomly pick variant)
+      const treeVariant = Math.floor(Math.random() * 3) + 1;
+      type = `tree${treeVariant}`;
+    } else if (rand < ROCK_SPAWN_THRESHOLD) {
+      // 25% chance: rock (randomly pick variant)
+      const rockVariant = Math.floor(Math.random() * 3) + 1;
+      type = `rock${rockVariant}`;
+    } else if (rand < 0.875) {
+      // 12.5% chance: ramp
+      type = 'ramp';
+    } else {
+      // 12.5% chance: rail
+      type = 'rail';
+    }
+
+    // Spawn in world coordinates around the visible area
+    const worldXPos =
+      player.worldX +
+      (Math.random() - 0.5) * canvas.width * OBSTACLE_SPAWN_WIDTH_MULTIPLIER;
+
+    // Create new obstacle
+    const newObstacle = {
+      type: type,
+      worldX: worldXPos,
+      y: canvas.height + OBSTACLE_SPAWN_Y_OFFSET,
+      active: true,
+    };
+
+    // Check if new obstacle collides with existing obstacles
+    const newObstacleDef = OBSTACLE_TYPES[newObstacle.type];
+    const newBox = {
+      x: newObstacle.worldX,
+      y: newObstacle.y,
+      w: newObstacleDef.w,
+      h: newObstacleDef.h,
+    };
+
+    let canSpawn = true;
+    for (let existing of obstacles) {
+      const existingDef = OBSTACLE_TYPES[existing.type];
+      const existingBox = {
+        x: existing.worldX,
+        y: existing.y,
+        w: existingDef.w,
+        h: existingDef.h,
+      };
+
+      if (checkCollision(newBox, existingBox)) {
+        canSpawn = false;
+        break;
+      }
+    }
+
+    // Only add obstacle if it doesn't overlap with existing ones
+    if (canSpawn) {
+      obstacles.push(newObstacle);
+    }
+  }
+}
+
 // --- UPDATE LOOP ---
 
 function update(deltaTime) {
@@ -778,70 +851,7 @@ function update(deltaTime) {
   if (shakeAmt < SCREEN_SHAKE_MIN_THRESHOLD) shakeAmt = 0;
 
   // --- Obstacle Spawner ---
-  // Chance to spawn increases slightly with speed
-  if (Math.random() < BASE_SPAWN_CHANCE + gameSpeed / SPAWN_SPEED_DIVISOR) {
-    const rand = Math.random();
-    let type;
-
-    if (rand < TREE_SPAWN_PROBABILITY) {
-      // 50% chance: tree (randomly pick variant)
-      const treeVariant = Math.floor(Math.random() * 3) + 1;
-      type = `tree${treeVariant}`;
-    } else if (rand < ROCK_SPAWN_THRESHOLD) {
-      // 25% chance: rock (randomly pick variant)
-      const rockVariant = Math.floor(Math.random() * 3) + 1;
-      type = `rock${rockVariant}`;
-    } else if (rand < 0.875) {
-      // 12.5% chance: ramp
-      type = 'ramp';
-    } else {
-      // 12.5% chance: rail
-      type = 'rail';
-    }
-
-    // Spawn in world coordinates around the visible area
-    const worldXPos =
-      player.worldX +
-      (Math.random() - 0.5) * canvas.width * OBSTACLE_SPAWN_WIDTH_MULTIPLIER;
-
-    // Create new obstacle
-    const newObstacle = {
-      type: type,
-      worldX: worldXPos,
-      y: canvas.height + OBSTACLE_SPAWN_Y_OFFSET,
-      active: true,
-    };
-
-    // Check if new obstacle collides with existing obstacles
-    const newObstacleDef = OBSTACLE_TYPES[newObstacle.type];
-    const newBox = {
-      x: newObstacle.worldX,
-      y: newObstacle.y,
-      w: newObstacleDef.w,
-      h: newObstacleDef.h,
-    };
-
-    let canSpawn = true;
-    for (let existing of obstacles) {
-      const existingDef = OBSTACLE_TYPES[existing.type];
-      const existingBox = {
-        x: existing.worldX,
-        y: existing.y,
-        w: existingDef.w,
-        h: existingDef.h,
-      };
-
-      if (checkCollision(newBox, existingBox)) {
-        canSpawn = false;
-        break;
-      }
-    }
-
-    // Only add obstacle if it doesn't overlap with existing ones
-    if (canSpawn) {
-      obstacles.push(newObstacle);
-    }
-  }
+  spawnRandomObstacle();
 
   // --- Update Obstacles ---
   for (let i = obstacles.length - 1; i >= 0; i--) {
