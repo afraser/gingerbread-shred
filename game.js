@@ -384,25 +384,34 @@ function startFreeRide() {
 
 // Show list of available trails
 function showTrailList() {
-  const trailListDiv = document.getElementById('trailList');
+  // Create a file input element for trail selection
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json';
 
-  if (!window.TRAILS || window.TRAILS.length === 0) {
-    trailListDiv.innerHTML =
-      '<p style="color: #ff004d;">No trails available</p>';
-    return;
-  }
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // Display trail buttons
-  let html = '<p>Select a trail:</p>';
-  window.TRAILS.forEach((trailInfo) => {
-    html += `<button class="trail-btn" data-trail="${trailInfo.id}">${trailInfo.name}</button><br>`;
+    try {
+      const text = await file.text();
+      const trailData = JSON.parse(text);
+
+      // Validate trail data
+      if (!trailData.width || !trailData.length || !trailData.obstacles) {
+        alert('Invalid trail file format');
+        return;
+      }
+
+      // Load the trail
+      loadTrailFromData(trailData, file.name.replace('.json', ''));
+    } catch (error) {
+      alert(`Failed to load trail: ${error.message}`);
+    }
   });
-  trailListDiv.innerHTML = html;
 
-  // Add click handlers to trail buttons
-  document.querySelectorAll('.trail-btn').forEach((btn) => {
-    btn.addEventListener('click', () => loadTrail(btn.dataset.trail));
-  });
+  // Trigger file selection
+  fileInput.click();
 }
 
 // Generate decorative obstacles for off-bounds areas
@@ -505,16 +514,10 @@ function generateDecorativeObstacles() {
   }
 }
 
-// Load a specific trail
-function loadTrail(trailId) {
-  // Find the trail data from the global TRAIL_DATA object
-  if (!window.TRAIL_DATA || !window.TRAIL_DATA[trailId]) {
-    alert(`Trail "${trailId}" not found`);
-    return;
-  }
-
-  trail = window.TRAIL_DATA[trailId];
-  currentTrailId = trailId;
+// Load a trail from data
+function loadTrailFromData(trailData, trailName) {
+  trail = trailData;
+  currentTrailId = trailName;
   trailDistance = 0;
   trailObstaclesSpawned = [];
 
@@ -532,12 +535,9 @@ function loadTrail(trailId) {
 
 // Show trail completion screen
 function showTrailComplete() {
-  const trailInfo = window.TRAILS.find((t) => t.id === currentTrailId);
-  const trailName = trailInfo ? trailInfo.name : 'Unknown Trail';
-
   startScreen.innerHTML = `
     <h1 style="color: #30c873;">APRÈS SKI</h1>
-    <p style="font-size: 24px; margin: 20px 0;">${trailName}</p>
+    <p style="font-size: 24px; margin: 20px 0;">${currentTrailId}</p>
     <p style="font-size: 32px; color: #ff004d;">SCORE: ${Math.floor(score)}</p>
     <br>
     <p>Space: Retry Trail</p>
@@ -556,7 +556,6 @@ function updateStartScreenInstructions() {
     ${controlsText}
     <button class="menu-btn" id="btnFreeRide">FREE RIDE</button>
     <button class="menu-btn" id="btnLoadTrail">LOAD TRAIL</button>
-    <div id="trailList"></div>
   `;
 
   // Add event listeners for menu buttons
