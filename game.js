@@ -1566,8 +1566,8 @@ window.addEventListener('keydown', (e) => {
       updateStartScreenInstructions();
     } else if (gameState === 'TRAIL_COMPLETE') {
       // Reload the same trail
-      if (currentTrailId) {
-        loadTrail(currentTrailId);
+      if (trail && currentTrailId) {
+        loadTrailFromData(trail, currentTrailId);
       }
     }
   }
