@@ -16,6 +16,18 @@ const OBSTACLE_TYPES = {
   rail: { w: 12, h: 300 },
 };
 
+// Visual bounds for selection boxes (matches actual rendering)
+const VISUAL_BOUNDS = {
+  tree1: { x: -5, y: -70, w: 30, h: 90 },  // From rendering: x+10-15 to x+10+15, y-60 to y+30
+  tree2: { x: -5, y: -45, w: 40, h: 65 },  // From rendering: x+15-20 to x+15+20, y-35 to y+30
+  tree3: { x: -8, y: -40, w: 46, h: 60 },  // From rendering: x+15-23 to x+15+23, y-30 to y+30
+  rock1: { x: 0, y: -5, w: 30, h: 20 },    // From rendering
+  rock2: { x: 0, y: -5, w: 30, h: 20 },    // From rendering
+  rock3: { x: 0, y: -5, w: 40, h: 20 },    // From rendering
+  ramp: { x: 0, y: 0, w: 60, h: 20 },      // No offset
+  rail: { x: -5, y: 0, w: 12, h: 300 },    // From rendering
+};
+
 // DOM Elements
 const menuScreen = document.getElementById('menuScreen');
 const editorContainer = document.getElementById('editorContainer');
@@ -64,21 +76,19 @@ function redraw() {
   obstacles.forEach(obstacle => {
     drawObstacle(obstacle.type, obstacle.worldX, obstacle.y, 1.0);
 
-    const renderOffsetY = getRenderOffsetY(obstacle.type);
-
     // Draw outline if this obstacle is selected
     if (selectedObstaclesForEdit.includes(obstacle)) {
-      const def = OBSTACLE_TYPES[obstacle.type];
+      const bounds = VISUAL_BOUNDS[obstacle.type];
       ctx.strokeStyle = '#29adff';
       ctx.lineWidth = 3;
-      ctx.strokeRect(obstacle.worldX, obstacle.y + renderOffsetY, def.w, def.h);
+      ctx.strokeRect(obstacle.worldX + bounds.x, obstacle.y + bounds.y, bounds.w, bounds.h);
     }
     // Draw faint outline if hovering in select mode (and not already selected)
     else if (isSelectMode && hoveredObstacle === obstacle && !isDraggingSelection) {
-      const def = OBSTACLE_TYPES[obstacle.type];
+      const bounds = VISUAL_BOUNDS[obstacle.type];
       ctx.strokeStyle = 'rgba(41, 173, 255, 0.4)';
       ctx.lineWidth = 2;
-      ctx.strokeRect(obstacle.worldX, obstacle.y + renderOffsetY, def.w, def.h);
+      ctx.strokeRect(obstacle.worldX + bounds.x, obstacle.y + bounds.y, bounds.w, bounds.h);
     }
   });
 
@@ -145,22 +155,14 @@ function drawObstacle(type, x, y, opacity) {
   ctx.restore();
 }
 
-// Get rendering Y offset for obstacle type
-function getRenderOffsetY(type) {
-  if (type.startsWith('tree')) return -10;
-  if (type.startsWith('rock')) return -5;
-  return 0;
-}
-
 // Check if point is inside obstacle bounds
 function isPointInObstacle(px, py, obstacle) {
-  const def = OBSTACLE_TYPES[obstacle.type];
-  const offsetY = getRenderOffsetY(obstacle.type);
+  const bounds = VISUAL_BOUNDS[obstacle.type];
   return (
-    px >= obstacle.worldX &&
-    px <= obstacle.worldX + def.w &&
-    py >= obstacle.y + offsetY &&
-    py <= obstacle.y + offsetY + def.h
+    px >= obstacle.worldX + bounds.x &&
+    px <= obstacle.worldX + bounds.x + bounds.w &&
+    py >= obstacle.y + bounds.y &&
+    py <= obstacle.y + bounds.y + bounds.h
   );
 }
 
@@ -177,13 +179,12 @@ function getObstacleAt(x, y) {
 
 // Check if a box intersects with an obstacle
 function boxIntersectsObstacle(boxX, boxY, boxW, boxH, obstacle) {
-  const def = OBSTACLE_TYPES[obstacle.type];
-  const offsetY = getRenderOffsetY(obstacle.type);
+  const bounds = VISUAL_BOUNDS[obstacle.type];
   return !(
-    boxX + boxW < obstacle.worldX ||
-    boxX > obstacle.worldX + def.w ||
-    boxY + boxH < obstacle.y + offsetY ||
-    boxY > obstacle.y + offsetY + def.h
+    boxX + boxW < obstacle.worldX + bounds.x ||
+    boxX > obstacle.worldX + bounds.x + bounds.w ||
+    boxY + boxH < obstacle.y + bounds.y ||
+    boxY > obstacle.y + bounds.y + bounds.h
   );
 }
 
