@@ -64,19 +64,21 @@ function redraw() {
   obstacles.forEach(obstacle => {
     drawObstacle(obstacle.type, obstacle.worldX, obstacle.y, 1.0);
 
+    const renderOffsetY = getRenderOffsetY(obstacle.type);
+
     // Draw outline if this obstacle is selected
     if (selectedObstaclesForEdit.includes(obstacle)) {
       const def = OBSTACLE_TYPES[obstacle.type];
       ctx.strokeStyle = '#29adff';
       ctx.lineWidth = 3;
-      ctx.strokeRect(obstacle.worldX, obstacle.y, def.w, def.h);
+      ctx.strokeRect(obstacle.worldX, obstacle.y + renderOffsetY, def.w, def.h);
     }
     // Draw faint outline if hovering in select mode (and not already selected)
     else if (isSelectMode && hoveredObstacle === obstacle && !isDraggingSelection) {
       const def = OBSTACLE_TYPES[obstacle.type];
       ctx.strokeStyle = 'rgba(41, 173, 255, 0.4)';
       ctx.lineWidth = 2;
-      ctx.strokeRect(obstacle.worldX, obstacle.y, def.w, def.h);
+      ctx.strokeRect(obstacle.worldX, obstacle.y + renderOffsetY, def.w, def.h);
     }
   });
 
@@ -143,14 +145,22 @@ function drawObstacle(type, x, y, opacity) {
   ctx.restore();
 }
 
+// Get rendering Y offset for obstacle type
+function getRenderOffsetY(type) {
+  if (type.startsWith('tree')) return -10;
+  if (type.startsWith('rock')) return -5;
+  return 0;
+}
+
 // Check if point is inside obstacle bounds
 function isPointInObstacle(px, py, obstacle) {
   const def = OBSTACLE_TYPES[obstacle.type];
+  const offsetY = getRenderOffsetY(obstacle.type);
   return (
     px >= obstacle.worldX &&
     px <= obstacle.worldX + def.w &&
-    py >= obstacle.y &&
-    py <= obstacle.y + def.h
+    py >= obstacle.y + offsetY &&
+    py <= obstacle.y + offsetY + def.h
   );
 }
 
@@ -168,11 +178,12 @@ function getObstacleAt(x, y) {
 // Check if a box intersects with an obstacle
 function boxIntersectsObstacle(boxX, boxY, boxW, boxH, obstacle) {
   const def = OBSTACLE_TYPES[obstacle.type];
+  const offsetY = getRenderOffsetY(obstacle.type);
   return !(
     boxX + boxW < obstacle.worldX ||
     boxX > obstacle.worldX + def.w ||
-    boxY + boxH < obstacle.y ||
-    boxY > obstacle.y + def.h
+    boxY + boxH < obstacle.y + offsetY ||
+    boxY > obstacle.y + offsetY + def.h
   );
 }
 
