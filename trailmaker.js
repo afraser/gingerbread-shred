@@ -24,10 +24,13 @@ const btnLoadTrail = document.getElementById('btnLoadTrail');
 const canvas = document.getElementById('trailCanvas');
 const ctx = canvas.getContext('2d');
 const saveBtn = document.getElementById('saveBtn');
+const selectTool = document.getElementById('selectTool');
 const obstacleButtons = document.querySelectorAll('.obstacle-btn');
 
 // State
 let selectedObstacle = null;
+let isSelectMode = false;
+let selectedObstaclesForEdit = []; // Currently selected obstacles for editing
 let obstacles = [];
 let mouseX = 0;
 let mouseY = 0;
@@ -35,6 +38,8 @@ let hoveredObstacle = null;
 let draggingObstacle = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
+let selectionBoxStart = null; // Start point for selection box
+let isDrawingSelectionBox = false;
 
 // Initialize
 function init() {
@@ -54,10 +59,36 @@ function redraw() {
   // Draw all placed obstacles
   obstacles.forEach(obstacle => {
     drawObstacle(obstacle.type, obstacle.worldX, obstacle.y, 1.0);
+
+    // Draw outline if this obstacle is selected
+    if (selectedObstaclesForEdit.includes(obstacle)) {
+      const def = OBSTACLE_TYPES[obstacle.type];
+      ctx.strokeStyle = '#29adff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(obstacle.worldX, obstacle.y, def.w, def.h);
+    }
   });
 
+  // Draw selection box if being drawn
+  if (isDrawingSelectionBox && selectionBoxStart) {
+    const x = Math.min(selectionBoxStart.x, mouseX);
+    const y = Math.min(selectionBoxStart.y, mouseY);
+    const w = Math.abs(mouseX - selectionBoxStart.x);
+    const h = Math.abs(mouseY - selectionBoxStart.y);
+
+    ctx.strokeStyle = '#29adff';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+
+    // Fill with semi-transparent color
+    ctx.fillStyle = 'rgba(41, 173, 255, 0.1)';
+    ctx.fillRect(x, y, w, h);
+  }
+
   // Draw hover preview if hovering and not over an existing obstacle
-  if (selectedObstacle && !hoveredObstacle && !draggingObstacle) {
+  if (selectedObstacle && !hoveredObstacle && !draggingObstacle && !isSelectMode) {
     drawObstacle(selectedObstacle, mouseX, mouseY, 0.5);
   }
 }
@@ -123,6 +154,24 @@ function getObstacleAt(x, y) {
   return null;
 }
 
+// Check if a box intersects with an obstacle
+function boxIntersectsObstacle(boxX, boxY, boxW, boxH, obstacle) {
+  const def = OBSTACLE_TYPES[obstacle.type];
+  return !(
+    boxX + boxW < obstacle.worldX ||
+    boxX > obstacle.worldX + def.w ||
+    boxY + boxH < obstacle.y ||
+    boxY > obstacle.y + def.h
+  );
+}
+
+// Get all obstacles that intersect with a box
+function getObstaclesInBox(boxX, boxY, boxW, boxH) {
+  return obstacles.filter(obstacle =>
+    boxIntersectsObstacle(boxX, boxY, boxW, boxH, obstacle)
+  );
+}
+
 // Event Handlers
 btnNewTrail.addEventListener('click', () => {
   menuScreen.style.display = 'none';
@@ -170,7 +219,25 @@ btnLoadTrail.addEventListener('click', () => {
   fileInput.click();
 });
 
+// Select tool handler
+selectTool.addEventListener('click', () => {
+  // Remove selected class from all buttons
+  obstacleButtons.forEach(b => b.classList.remove('selected'));
+
+  // Add selected class to select tool
+  selectTool.classList.add('selected');
+
+  // Enable select mode
+  isSelectMode = true;
+  selectedObstacle = null;
+  canvas.style.cursor = 'crosshair';
+});
+
+// Obstacle buttons handler
 obstacleButtons.forEach(btn => {
+  // Skip the select tool button
+  if (btn.id === 'selectTool') return;
+
   btn.addEventListener('click', () => {
     // Remove selected class from all buttons
     obstacleButtons.forEach(b => b.classList.remove('selected'));
@@ -178,8 +245,10 @@ obstacleButtons.forEach(btn => {
     // Add selected class to clicked button
     btn.classList.add('selected');
 
-    // Store selected obstacle type
+    // Disable select mode and store selected obstacle type
+    isSelectMode = false;
     selectedObstacle = btn.dataset.type;
+    selectedObstaclesForEdit = []; // Deselect any selected obstacles
   });
 });
 
@@ -218,12 +287,17 @@ canvas.addEventListener('mousemove', (e) => {
     draggingObstacle.worldX = mouseX - dragOffsetX;
     draggingObstacle.y = mouseY - dragOffsetY;
     redraw();
+  } else if (isDrawingSelectionBox) {
+    // Update selection box as mouse moves
+    redraw();
   } else {
     // Check if hovering over an obstacle
     hoveredObstacle = getObstacleAt(mouseX, mouseY);
 
     // Update cursor
-    if (hoveredObstacle) {
+    if (isSelectMode) {
+      canvas.style.cursor = 'crosshair';
+    } else if (hoveredObstacle) {
       canvas.style.cursor = 'grab';
     } else if (selectedObstacle) {
       canvas.style.cursor = 'crosshair';
@@ -243,7 +317,19 @@ canvas.addEventListener('mousedown', (e) => {
 
   const clickedObstacle = getObstacleAt(mouseX, mouseY);
 
-  if (clickedObstacle) {
+  if (isSelectMode) {
+    // Select mode: start box selection or single select
+    if (clickedObstacle) {
+      // Single click on obstacle - select just that one
+      selectedObstaclesForEdit = [clickedObstacle];
+      redraw();
+    } else {
+      // Start box selection
+      selectionBoxStart = { x: mouseX, y: mouseY };
+      isDrawingSelectionBox = true;
+      selectedObstaclesForEdit = []; // Clear selection
+    }
+  } else if (clickedObstacle) {
     // Start dragging existing obstacle
     draggingObstacle = clickedObstacle;
     dragOffsetX = mouseX - clickedObstacle.worldX;
@@ -263,7 +349,21 @@ canvas.addEventListener('mousedown', (e) => {
 
 // Mouse up handler
 canvas.addEventListener('mouseup', () => {
-  if (draggingObstacle) {
+  if (isDrawingSelectionBox) {
+    // Calculate box bounds
+    const x = Math.min(selectionBoxStart.x, mouseX);
+    const y = Math.min(selectionBoxStart.y, mouseY);
+    const w = Math.abs(mouseX - selectionBoxStart.x);
+    const h = Math.abs(mouseY - selectionBoxStart.y);
+
+    // Get all obstacles in box
+    selectedObstaclesForEdit = getObstaclesInBox(x, y, w, h);
+
+    // Reset box drawing state
+    isDrawingSelectionBox = false;
+    selectionBoxStart = null;
+    redraw();
+  } else if (draggingObstacle) {
     draggingObstacle = null;
     canvas.style.cursor = hoveredObstacle ? 'grab' : 'crosshair';
   }
@@ -273,6 +373,8 @@ canvas.addEventListener('mouseup', () => {
 canvas.addEventListener('mouseleave', () => {
   draggingObstacle = null;
   hoveredObstacle = null;
+  isDrawingSelectionBox = false;
+  selectionBoxStart = null;
   canvas.style.cursor = 'default';
   redraw();
 });
