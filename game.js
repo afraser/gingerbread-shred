@@ -273,6 +273,7 @@ let snow = [];
 let trail = null; // Optional trail definition with width constraints
 let currentTrailId = null; // ID of currently loaded trail (for reloading)
 let trailDistance = 0; // Distance traveled down the trail
+let trailObstaclesSpawned = []; // Track which trail obstacles have been spawned
 
 // --- CANVAS SETUP ---
 
@@ -370,6 +371,7 @@ function startFreeRide() {
   trail = null;
   currentTrailId = null;
   trailDistance = 0;
+  trailObstaclesSpawned = [];
   init();
   gameState = 'PLAYING';
   startScreen.style.display = 'none';
@@ -412,6 +414,7 @@ function loadTrail(trailId) {
   trail = window.TRAIL_DATA[trailId];
   currentTrailId = trailId;
   trailDistance = 0;
+  trailObstaclesSpawned = [];
 
   // Start the game with the loaded trail
   init();
@@ -950,6 +953,28 @@ function update(deltaTime) {
   // Only spawn random obstacles if no trail is defined
   if (!trail) {
     spawnRandomObstacle();
+  } else if (trail.obstacles) {
+    // Spawn trail obstacles when they come into view
+    const spawnDistance = canvas.height + 100; // Spawn obstacles this far ahead
+
+    trail.obstacles.forEach((trailObstacle, index) => {
+      // Check if this obstacle should be spawned
+      if (!trailObstaclesSpawned[index] && trailObstacle.y <= trailDistance + spawnDistance) {
+        // Convert trail coordinates to game coordinates
+        // Trail maker uses 0-width, game uses -width/2 to +width/2
+        const gameWorldX = trailObstacle.worldX - (trail.width / 2);
+        const screenY = canvas.height + (trailObstacle.y - trailDistance);
+
+        obstacles.push({
+          type: trailObstacle.type,
+          worldX: gameWorldX,
+          y: screenY,
+          active: true
+        });
+
+        trailObstaclesSpawned[index] = true;
+      }
+    });
   }
 
   // --- Update Obstacles ---

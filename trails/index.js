@@ -2,7 +2,8 @@
 // Add new trails to this array as you create them
 // Format: { id: 'trail-id', name: 'Display Name' }
 window.TRAILS = [
-  { id: 'tutorial', name: 'Tutorial Trail' }
+  { id: 'tutorial', name: 'Tutorial Trail' },
+  { id: 'my trail', name: 'My Custom Trail' },
 ];
 
 // Trail data storage
