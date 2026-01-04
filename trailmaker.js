@@ -27,6 +27,9 @@ const saveBtn = document.getElementById('saveBtn');
 const selectTool = document.getElementById('selectTool');
 const obstacleButtons = document.querySelectorAll('.obstacle-btn');
 
+// Set select tool as selected by default
+selectTool.classList.add('selected');
+
 // State
 let selectedObstacle = null;
 let isSelectMode = true; // Select tool active by default
@@ -45,9 +48,6 @@ let isDraggingSelection = false; // Track if dragging multiple selected obstacle
 // Initialize
 function init() {
   obstacles = [];
-  // Set select tool as active by default
-  selectTool.classList.add('selected');
-  canvas.style.cursor = 'crosshair';
   redraw();
 }
 
