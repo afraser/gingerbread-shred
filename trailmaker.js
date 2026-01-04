@@ -56,6 +56,7 @@ let dragOffsetY = 0;
 let selectionBoxStart = null; // Start point for selection box
 let isDrawingSelectionBox = false;
 let isDraggingSelection = false; // Track if dragging multiple selected obstacles
+let clipboard = []; // Copied obstacles
 
 // Initialize
 function init() {
@@ -430,4 +431,48 @@ canvas.addEventListener('mouseleave', () => {
   selectionBoxStart = null;
   canvas.style.cursor = 'default';
   redraw();
+});
+
+// Keyboard event handlers for copy/paste
+document.addEventListener('keydown', (e) => {
+  // Check for Ctrl+C or Cmd+C (copy)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    if (selectedObstaclesForEdit.length > 0) {
+      // Copy selected obstacles
+      clipboard = selectedObstaclesForEdit.map(obstacle => ({
+        type: obstacle.type,
+        worldX: obstacle.worldX,
+        y: obstacle.y
+      }));
+      e.preventDefault();
+    }
+  }
+
+  // Check for Ctrl+V or Cmd+V (paste)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+    if (clipboard.length > 0) {
+      // Create new obstacles from clipboard with +10x, +10y offset
+      const newObstacles = clipboard.map(copied => ({
+        type: copied.type,
+        worldX: copied.worldX + 10,
+        y: copied.y + 10
+      }));
+
+      // Add to obstacles array
+      obstacles.push(...newObstacles);
+
+      // Set newly pasted obstacles as current selection
+      selectedObstaclesForEdit = newObstacles;
+
+      // Update clipboard to the new positions for repeated pasting
+      clipboard = newObstacles.map(obstacle => ({
+        type: obstacle.type,
+        worldX: obstacle.worldX,
+        y: obstacle.y
+      }));
+
+      redraw();
+      e.preventDefault();
+    }
+  }
 });
