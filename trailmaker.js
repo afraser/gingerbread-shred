@@ -40,6 +40,7 @@ let dragOffsetX = 0;
 let dragOffsetY = 0;
 let selectionBoxStart = null; // Start point for selection box
 let isDrawingSelectionBox = false;
+let isDraggingSelection = false; // Track if dragging multiple selected obstacles
 
 // Initialize
 function init() {
@@ -65,6 +66,13 @@ function redraw() {
       const def = OBSTACLE_TYPES[obstacle.type];
       ctx.strokeStyle = '#29adff';
       ctx.lineWidth = 3;
+      ctx.strokeRect(obstacle.worldX, obstacle.y, def.w, def.h);
+    }
+    // Draw faint outline if hovering in select mode (and not already selected)
+    else if (isSelectMode && hoveredObstacle === obstacle && !isDraggingSelection) {
+      const def = OBSTACLE_TYPES[obstacle.type];
+      ctx.strokeStyle = 'rgba(41, 173, 255, 0.4)';
+      ctx.lineWidth = 2;
       ctx.strokeRect(obstacle.worldX, obstacle.y, def.w, def.h);
     }
   });
@@ -283,9 +291,21 @@ canvas.addEventListener('mousemove', (e) => {
   mouseY = e.clientY - rect.top;
 
   if (draggingObstacle) {
-    // Update dragged obstacle position
-    draggingObstacle.worldX = mouseX - dragOffsetX;
-    draggingObstacle.y = mouseY - dragOffsetY;
+    // Update dragged obstacle position(s)
+    const deltaX = mouseX - dragOffsetX - draggingObstacle.worldX;
+    const deltaY = mouseY - dragOffsetY - draggingObstacle.y;
+
+    if (isDraggingSelection) {
+      // Move all selected obstacles by the same delta
+      selectedObstaclesForEdit.forEach(obstacle => {
+        obstacle.worldX += deltaX;
+        obstacle.y += deltaY;
+      });
+    } else {
+      // Move single obstacle
+      draggingObstacle.worldX = mouseX - dragOffsetX;
+      draggingObstacle.y = mouseY - dragOffsetY;
+    }
     redraw();
   } else if (isDrawingSelectionBox) {
     // Update selection box as mouse moves
@@ -295,7 +315,9 @@ canvas.addEventListener('mousemove', (e) => {
     hoveredObstacle = getObstacleAt(mouseX, mouseY);
 
     // Update cursor
-    if (isSelectMode) {
+    if (isSelectMode && hoveredObstacle) {
+      canvas.style.cursor = 'grab';
+    } else if (isSelectMode) {
       canvas.style.cursor = 'crosshair';
     } else if (hoveredObstacle) {
       canvas.style.cursor = 'grab';
@@ -318,11 +340,25 @@ canvas.addEventListener('mousedown', (e) => {
   const clickedObstacle = getObstacleAt(mouseX, mouseY);
 
   if (isSelectMode) {
-    // Select mode: start box selection or single select
+    // Select mode: support dragging and box selection
     if (clickedObstacle) {
-      // Single click on obstacle - select just that one
-      selectedObstaclesForEdit = [clickedObstacle];
-      redraw();
+      // Clicked on an obstacle
+      if (selectedObstaclesForEdit.includes(clickedObstacle)) {
+        // Clicked on a selected obstacle - start dragging all selected
+        draggingObstacle = clickedObstacle;
+        dragOffsetX = mouseX - clickedObstacle.worldX;
+        dragOffsetY = mouseY - clickedObstacle.y;
+        isDraggingSelection = true;
+        canvas.style.cursor = 'grabbing';
+      } else {
+        // Clicked on an unselected obstacle - clear selection, select it, and start dragging
+        selectedObstaclesForEdit = [clickedObstacle];
+        draggingObstacle = clickedObstacle;
+        dragOffsetX = mouseX - clickedObstacle.worldX;
+        dragOffsetY = mouseY - clickedObstacle.y;
+        isDraggingSelection = false;
+        canvas.style.cursor = 'grabbing';
+      }
     } else {
       // Start box selection
       selectionBoxStart = { x: mouseX, y: mouseY };
@@ -365,13 +401,15 @@ canvas.addEventListener('mouseup', () => {
     redraw();
   } else if (draggingObstacle) {
     draggingObstacle = null;
-    canvas.style.cursor = hoveredObstacle ? 'grab' : 'crosshair';
+    isDraggingSelection = false;
+    canvas.style.cursor = hoveredObstacle ? 'grab' : (isSelectMode ? 'crosshair' : 'default');
   }
 });
 
 // Mouse leave handler
 canvas.addEventListener('mouseleave', () => {
   draggingObstacle = null;
+  isDraggingSelection = false;
   hoveredObstacle = null;
   isDrawingSelectionBox = false;
   selectionBoxStart = null;
