@@ -16,12 +16,13 @@ You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. D
 - Bonus for exiting a rail cleanly.
 - Bonus for exiting a rail cleanly after backslide.
   - Count backslides and multiply same as the flip bonus.
-- Bonus for jumping over an obstacle.
+- Bonus for jumping over obstacles.
 - Add height attribute to obstacle hit-box and use it to for collision in z-space. (No more bunny hopping trees)
 - Name tricks.
 - Log tricks and show them in receipt form at the end.
-- Lodge at the bottom of the hill.
-- New "Aprés Ski" screen:
+- Custom trails:
+  - Add a lodge at the bottom of the trail.
+- "Aprés Ski" screen:
   - Hot cocoa.
   - Tricks & point tally / receipt.
   - Render player sprite / HP remaining.
@@ -36,10 +37,6 @@ You're a gingerbread man on a snowboard. Show off your moves. Dodge obstacles. D
   - Must be able to enter from top & sides
   - When player hit-box occludes 50% in either dimension initiate a fall (z = player height at cliff entry point)
   - OR if player hits the side of a cliff hitbox then crumble() AND fall?
-- Levels / Trails
-  1. Implement min/max X-position: Render trees and/or stakes with pink tape along the edges.
-  2. Make a level builder
-  3. Intro screen: "free ride" / "load trail".
 - Add debug mode
   - Show hit-boxes checkbox.
   - Invincibility checkbox.
