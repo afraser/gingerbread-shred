@@ -1588,6 +1588,12 @@ window.addEventListener('resize', () => {
 window.addEventListener(
   'touchstart',
   (e) => {
+    // Don't prevent default if touching a button - let it handle normally
+    const target = e.target;
+    if (target.tagName === 'BUTTON' || target.closest('button')) {
+      return;
+    }
+
     e.preventDefault();
     const coords = getTouchCoordinates(e);
     if (!coords) return; // Guard against invalid touch data
