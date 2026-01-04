@@ -433,8 +433,16 @@ canvas.addEventListener('mouseleave', () => {
   redraw();
 });
 
-// Keyboard event handlers for copy/paste/delete
+// Keyboard event handlers for copy/paste/delete/select all
 document.addEventListener('keydown', (e) => {
+  // Check for Ctrl+A or Cmd+A (select all)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+    // Select all obstacles
+    selectedObstaclesForEdit = [...obstacles];
+    redraw();
+    e.preventDefault();
+  }
+
   // Check for Ctrl+C or Cmd+C (copy)
   if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
     if (selectedObstaclesForEdit.length > 0) {
