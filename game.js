@@ -274,6 +274,7 @@ let trail = null; // Optional trail definition with width constraints
 let currentTrailId = null; // ID of currently loaded trail (for reloading)
 let trailDistance = 0; // Distance traveled down the trail
 let trailObstaclesSpawned = []; // Track which trail obstacles have been spawned
+let decorativeObstacles = []; // Visual-only obstacles in off-bounds areas
 
 // --- CANVAS SETUP ---
 
@@ -372,6 +373,7 @@ function startFreeRide() {
   currentTrailId = null;
   trailDistance = 0;
   trailObstaclesSpawned = [];
+  decorativeObstacles = [];
   init();
   gameState = 'PLAYING';
   startScreen.style.display = 'none';
@@ -403,6 +405,106 @@ function showTrailList() {
   });
 }
 
+// Generate decorative obstacles for off-bounds areas
+function generateDecorativeObstacles() {
+  decorativeObstacles = [];
+
+  if (!trail) return;
+
+  const leftBound = -trail.width / 2;
+  const rightBound = trail.width / 2;
+  // Trees appear more often than rocks
+  const decorativeTypes = [
+    'tree1',
+    'tree2',
+    'tree3',
+    'tree1',
+    'tree2',
+    'tree3',
+    'tree1',
+    'tree2',
+    'tree3',
+    'rock1',
+    'rock2',
+    'rock3',
+  ];
+  const spacing = 80; // Minimum spacing between decorative obstacles
+
+  // Generate obstacles on left side
+  for (let y = 0; y < trail.length; y += spacing) {
+    for (let x = leftBound - 500; x < leftBound - 50; x += spacing) {
+      const type =
+        decorativeTypes[Math.floor(Math.random() * decorativeTypes.length)];
+      const offsetX = (Math.random() - 0.5) * spacing * 0.8;
+      const offsetY = (Math.random() - 0.5) * spacing * 0.8;
+
+      const newObstacle = {
+        type: type,
+        worldX: x + offsetX,
+        y: y + offsetY,
+      };
+
+      // Check collision with existing decorative obstacles
+      let canPlace = true;
+      const newDef = OBSTACLE_TYPES[type];
+      for (let existing of decorativeObstacles) {
+        const existingDef = OBSTACLE_TYPES[existing.type];
+        const dx = Math.abs(newObstacle.worldX - existing.worldX);
+        const dy = Math.abs(newObstacle.y - existing.y);
+
+        if (
+          dx < (newDef.w + existingDef.w) / 2 + 10 &&
+          dy < (newDef.h + existingDef.h) / 2 + 10
+        ) {
+          canPlace = false;
+          break;
+        }
+      }
+
+      if (canPlace) {
+        decorativeObstacles.push(newObstacle);
+      }
+    }
+  }
+
+  // Generate obstacles on right side
+  for (let y = 0; y < trail.length; y += spacing) {
+    for (let x = rightBound + 50; x < rightBound + 500; x += spacing) {
+      const type =
+        decorativeTypes[Math.floor(Math.random() * decorativeTypes.length)];
+      const offsetX = (Math.random() - 0.5) * spacing * 0.8;
+      const offsetY = (Math.random() - 0.5) * spacing * 0.8;
+
+      const newObstacle = {
+        type: type,
+        worldX: x + offsetX,
+        y: y + offsetY,
+      };
+
+      // Check collision with existing decorative obstacles
+      let canPlace = true;
+      const newDef = OBSTACLE_TYPES[type];
+      for (let existing of decorativeObstacles) {
+        const existingDef = OBSTACLE_TYPES[existing.type];
+        const dx = Math.abs(newObstacle.worldX - existing.worldX);
+        const dy = Math.abs(newObstacle.y - existing.y);
+
+        if (
+          dx < (newDef.w + existingDef.w) / 2 + 10 &&
+          dy < (newDef.h + existingDef.h) / 2 + 10
+        ) {
+          canPlace = false;
+          break;
+        }
+      }
+
+      if (canPlace) {
+        decorativeObstacles.push(newObstacle);
+      }
+    }
+  }
+}
+
 // Load a specific trail
 function loadTrail(trailId) {
   // Find the trail data from the global TRAIL_DATA object
@@ -415,6 +517,9 @@ function loadTrail(trailId) {
   currentTrailId = trailId;
   trailDistance = 0;
   trailObstaclesSpawned = [];
+
+  // Generate decorative obstacles for off-bounds areas
+  generateDecorativeObstacles();
 
   // Start the game with the loaded trail
   init();
@@ -959,17 +1064,20 @@ function update(deltaTime) {
 
     trail.obstacles.forEach((trailObstacle, index) => {
       // Check if this obstacle should be spawned
-      if (!trailObstaclesSpawned[index] && trailObstacle.y <= trailDistance + spawnDistance) {
+      if (
+        !trailObstaclesSpawned[index] &&
+        trailObstacle.y <= trailDistance + spawnDistance
+      ) {
         // Convert trail coordinates to game coordinates
         // Trail maker uses 0-width, game uses -width/2 to +width/2
-        const gameWorldX = trailObstacle.worldX - (trail.width / 2);
+        const gameWorldX = trailObstacle.worldX - trail.width / 2;
         const screenY = canvas.height + (trailObstacle.y - trailDistance);
 
         obstacles.push({
           type: trailObstacle.type,
           worldX: gameWorldX,
           y: screenY,
-          active: true
+          active: true,
         });
 
         trailObstaclesSpawned[index] = true;
@@ -1273,6 +1381,33 @@ function draw() {
     ctx.stroke();
 
     ctx.setLineDash([]); // Reset to solid line for other drawing
+  }
+
+  // Draw decorative obstacles (visual only, in off-bounds areas)
+  if (trail && decorativeObstacles.length > 0) {
+    const renderBuffer = 200; // Render obstacles this far off-screen to prevent pop-in
+
+    decorativeObstacles.forEach((deco) => {
+      // Convert from trail coordinates to screen coordinates
+      const screenY = deco.y - trailDistance;
+      const screenX = deco.worldX - cameraX + canvas.width / 2;
+
+      // Draw with extended buffer zone to prevent visible spawning
+      const def = OBSTACLE_TYPES[deco.type];
+      if (
+        screenY > -def.h - renderBuffer &&
+        screenY < canvas.height + def.h + renderBuffer &&
+        screenX > -def.w - renderBuffer &&
+        screenX < canvas.width + def.w + renderBuffer
+      ) {
+        if (deco.type === 'tree1') drawTree(screenX, screenY, 1);
+        else if (deco.type === 'tree2') drawTree(screenX, screenY, 2);
+        else if (deco.type === 'tree3') drawTree(screenX, screenY, 3);
+        else if (deco.type === 'rock1') drawRock(screenX, screenY, 1);
+        else if (deco.type === 'rock2') drawRock(screenX, screenY, 2);
+        else if (deco.type === 'rock3') drawRock(screenX, screenY, 3);
+      }
+    });
   }
 
   // Player visual bottom for depth sorting
