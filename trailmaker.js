@@ -433,7 +433,7 @@ canvas.addEventListener('mouseleave', () => {
   redraw();
 });
 
-// Keyboard event handlers for copy/paste
+// Keyboard event handlers for copy/paste/delete
 document.addEventListener('keydown', (e) => {
   // Check for Ctrl+C or Cmd+C (copy)
   if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -470,6 +470,20 @@ document.addEventListener('keydown', (e) => {
         worldX: obstacle.worldX,
         y: obstacle.y
       }));
+
+      redraw();
+      e.preventDefault();
+    }
+  }
+
+  // Check for Delete or Backspace key
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (selectedObstaclesForEdit.length > 0) {
+      // Remove selected obstacles from obstacles array
+      obstacles = obstacles.filter(obstacle => !selectedObstaclesForEdit.includes(obstacle));
+
+      // Clear selection
+      selectedObstaclesForEdit = [];
 
       redraw();
       e.preventDefault();
