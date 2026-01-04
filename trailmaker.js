@@ -58,10 +58,67 @@ let isDrawingSelectionBox = false;
 let isDraggingSelection = false; // Track if dragging multiple selected obstacles
 let clipboard = []; // Copied obstacles
 
+// Undo/Redo state
+let history = [[]]; // History of obstacle states
+let historyIndex = 0; // Current position in history
+const MAX_HISTORY_SIZE = 50; // Limit history size
+
 // Initialize
 function init() {
   obstacles = [];
+  history = [[]];
+  historyIndex = 0;
   redraw();
+}
+
+// Save current state to history
+function saveHistory() {
+  // Remove any future history if we're not at the end
+  history = history.slice(0, historyIndex + 1);
+
+  // Deep copy obstacles
+  const state = obstacles.map(o => ({
+    type: o.type,
+    worldX: o.worldX,
+    y: o.y
+  }));
+
+  history.push(state);
+
+  // Limit history size
+  if (history.length > MAX_HISTORY_SIZE) {
+    history.shift();
+  } else {
+    historyIndex++;
+  }
+}
+
+// Undo
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    obstacles = history[historyIndex].map(o => ({
+      type: o.type,
+      worldX: o.worldX,
+      y: o.y
+    }));
+    selectedObstaclesForEdit = [];
+    redraw();
+  }
+}
+
+// Redo
+function redo() {
+  if (historyIndex < history.length - 1) {
+    historyIndex++;
+    obstacles = history[historyIndex].map(o => ({
+      type: o.type,
+      worldX: o.worldX,
+      y: o.y
+    }));
+    selectedObstaclesForEdit = [];
+    redraw();
+  }
 }
 
 // Redraw the entire canvas
@@ -230,6 +287,14 @@ btnLoadTrail.addEventListener('click', () => {
         y: o.y
       }));
 
+      // Reset history with loaded state
+      history = [obstacles.map(o => ({
+        type: o.type,
+        worldX: o.worldX,
+        y: o.y
+      }))];
+      historyIndex = 0;
+
       // Show editor and redraw
       menuScreen.style.display = 'none';
       editorContainer.style.display = 'block';
@@ -395,6 +460,7 @@ canvas.addEventListener('mousedown', (e) => {
       worldX: mouseX,
       y: mouseY
     });
+    saveHistory();
     redraw();
   }
 });
@@ -416,6 +482,8 @@ canvas.addEventListener('mouseup', () => {
     selectionBoxStart = null;
     redraw();
   } else if (draggingObstacle) {
+    // Save history after dragging
+    saveHistory();
     draggingObstacle = null;
     isDraggingSelection = false;
     canvas.style.cursor = hoveredObstacle ? 'grab' : (isSelectMode ? 'crosshair' : 'default');
@@ -433,8 +501,23 @@ canvas.addEventListener('mouseleave', () => {
   redraw();
 });
 
-// Keyboard event handlers for copy/paste/delete/select all
+// Keyboard event handlers for copy/paste/delete/select all/undo/redo
 document.addEventListener('keydown', (e) => {
+  // Check for Ctrl+Z or Cmd+Z (undo)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    undo();
+    e.preventDefault();
+    return;
+  }
+
+  // Check for Ctrl+Shift+Z or Cmd+Shift+Z or Ctrl+Y or Cmd+Y (redo)
+  if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
+      ((e.ctrlKey || e.metaKey) && e.key === 'y')) {
+    redo();
+    e.preventDefault();
+    return;
+  }
+
   // Check for Ctrl+A or Cmd+A (select all)
   if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
     // Select all obstacles
@@ -479,6 +562,7 @@ document.addEventListener('keydown', (e) => {
         y: obstacle.y
       }));
 
+      saveHistory();
       redraw();
       e.preventDefault();
     }
@@ -493,6 +577,7 @@ document.addEventListener('keydown', (e) => {
       // Clear selection
       selectedObstaclesForEdit = [];
 
+      saveHistory();
       redraw();
       e.preventDefault();
     }
