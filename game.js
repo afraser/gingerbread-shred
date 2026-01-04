@@ -563,8 +563,14 @@ function updateStartScreenInstructions() {
     .getElementById('btnFreeRide')
     .addEventListener('click', startFreeRide);
   document
+    .getElementById('btnFreeRide')
+    .addEventListener('touchstart', startFreeRide);
+  document
     .getElementById('btnLoadTrail')
     .addEventListener('click', showTrailList);
+  document
+    .getElementById('btnLoadTrail')
+    .addEventListener('touchstart', showTrailList);
 }
 
 // Set initial instructions
