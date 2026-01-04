@@ -131,7 +131,43 @@ btnNewTrail.addEventListener('click', () => {
 });
 
 btnLoadTrail.addEventListener('click', () => {
-  alert('Load trail functionality coming soon!');
+  // Create a file input element
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json';
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const trailData = JSON.parse(text);
+
+      // Validate trail data
+      if (!trailData.width || !trailData.length || !trailData.obstacles) {
+        alert('Invalid trail file format');
+        return;
+      }
+
+      // Load the trail data
+      obstacles = trailData.obstacles.map(o => ({
+        type: o.type,
+        worldX: o.worldX,
+        y: o.y
+      }));
+
+      // Show editor and redraw
+      menuScreen.style.display = 'none';
+      editorContainer.style.display = 'block';
+      redraw();
+    } catch (error) {
+      alert(`Failed to load trail: ${error.message}`);
+    }
+  });
+
+  // Trigger file selection
+  fileInput.click();
 });
 
 obstacleButtons.forEach(btn => {
