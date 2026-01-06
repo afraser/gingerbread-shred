@@ -556,6 +556,7 @@ function updateStartScreenInstructions() {
     ${controlsText}
     <button class="menu-btn" id="btnFreeRide">FREE RIDE</button>
     <button class="menu-btn" id="btnLoadTrail">LOAD TRAIL</button>
+    <button class="menu-btn" id="btnTrailMaker">TRAIL MAKER</button>
   `;
 
   // Add event listeners for menu buttons
@@ -571,6 +572,16 @@ function updateStartScreenInstructions() {
   document
     .getElementById('btnLoadTrail')
     .addEventListener('touchstart', showTrailList);
+  document
+    .getElementById('btnTrailMaker')
+    .addEventListener('click', () => {
+      window.location.href = 'trailmaker.html';
+    });
+  document
+    .getElementById('btnTrailMaker')
+    .addEventListener('touchstart', () => {
+      window.location.href = 'trailmaker.html';
+    });
 }
 
 // Set initial instructions
