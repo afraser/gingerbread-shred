@@ -690,6 +690,7 @@ function init() {
     flipDirection: null, // 'frontflip' or 'backflip' - set on first rotation
     rotationVertical: 0, // 2D rotation: vertical axis (0-3: upright, laid back, inverted, laid forward)
     rotationHorizontal: 0, // 2D rotation: horizontal axis (0=frontside, 1=backside)
+    lastRotationHorizontal: 0, // Track previous horizontal rotation to detect spins
     crashed: false,
     crashTimer: 0,
     grinding: false, // Is player currently grinding a rail?
@@ -863,15 +864,13 @@ function update(deltaTime) {
       player.flipsCompleted++;
     }
 
-    // Detect spins (crossing from frontside to backside or vice versa)
-
-    const wasBackside = isBackside(player.lastState);
-    const nowBackside = isBackside(player.state);
-    if ((wasBackside && !nowBackside) || (!wasBackside && nowBackside)) {
+    // Detect spins (horizontal rotation changes = 180° spin)
+    if (player.rotationHorizontal !== player.lastRotationHorizontal) {
       player.halfSpinsCompleted++;
     }
 
     player.lastState = player.state;
+    player.lastRotationHorizontal = player.rotationHorizontal;
   }
 
   // Acceleration (disabled when crashed or in air)
@@ -1120,6 +1119,7 @@ function update(deltaTime) {
     player.flipsCompleted = 0;
     player.halfSpinsCompleted = 0;
     player.flipDirection = null;
+    player.lastRotationHorizontal = player.rotationHorizontal;
     syncRotationFromState(); // Sync rotation coordinates with current state
   }
   cameraX = player.worldX;
@@ -1204,6 +1204,7 @@ function update(deltaTime) {
           player.halfSpinsCompleted = 0;
           player.flipDirection = null;
           player.lastState = player.state; // Preserve current state
+          player.lastRotationHorizontal = player.rotationHorizontal;
           syncRotationFromState(); // Sync rotation coordinates with current state
           o.active = false;
         } else {
