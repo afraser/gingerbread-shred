@@ -41,22 +41,23 @@ function showBonus(points, trickName = null) {
  * Generate trick name from flips and spins
  * @param {number} flips - Number of complete flips (4 = 1 flip)
  * @param {number} halfSpins - Number of 180° spins
+ * @param {string} flipDirection - 'frontflip' or 'backflip'
  * @returns {string} - Trick name
  */
-function getTrickName(flips, halfSpins) {
+function getTrickName(flips, halfSpins, flipDirection = null) {
   const parts = [];
 
   // Handle flips
-  if (flips > 0) {
+  if (flips > 0 && flipDirection) {
     let flipPrefix = '';
     if (flips === 2) flipPrefix = 'Double ';
     else if (flips === 3) flipPrefix = 'Triple ';
     else if (flips === 4) flipPrefix = 'Quadruple ';
     else if (flips > 4) flipPrefix = `${flips}x `;
 
-    // Determine if frontflip or backflip based on rotation direction
-    // For now, we'll just use "Flip" - can be enhanced later with direction tracking
-    const flipType = flips === 1 ? 'Flip' : 'Flips';
+    // Use proper flip type based on direction
+    const baseFlipName = flipDirection === 'frontflip' ? 'Frontflip' : 'Backflip';
+    const flipType = flips === 1 ? baseFlipName : baseFlipName + 's';
     parts.push(flipPrefix + flipType);
   }
 
@@ -686,6 +687,7 @@ function init() {
     lastState: PLAYER_STATE.UPRIGHT, // Track previous state to detect completed rotations
     flipsCompleted: 0, // Count full rotations while airborne
     halfSpinsCompleted: 0, // Count horizontal rotations (spins) while airborne
+    flipDirection: null, // 'frontflip' or 'backflip' - set on first rotation
     rotationVertical: 0, // 2D rotation: vertical axis (0-3: upright, laid back, inverted, laid forward)
     rotationHorizontal: 0, // 2D rotation: horizontal axis (0=frontside, 1=backside)
     crashed: false,
@@ -815,6 +817,10 @@ function update(deltaTime) {
   if (player.z > 0 && gameSpeed >= MIN_FLIP_SPEED && !player.grinding) {
     // Up/Down arrows: vertical rotation (upright -> laid back -> inverted -> laid forward)
     if (keys.down) {
+      // Set flip direction on first rotation
+      if (player.flipDirection === null) {
+        player.flipDirection = 'backflip';
+      }
       player.rotationVertical =
         (player.rotationVertical + 1) % ROTATION_GRID.length;
       player.state =
@@ -822,6 +828,10 @@ function update(deltaTime) {
       keys.down = false; // Consume the key press
     }
     if (keys.up) {
+      // Set flip direction on first rotation
+      if (player.flipDirection === null) {
+        player.flipDirection = 'frontflip';
+      }
       player.rotationVertical =
         (player.rotationVertical - 1 + ROTATION_GRID.length) %
         ROTATION_GRID.length;
@@ -1085,7 +1095,8 @@ function update(deltaTime) {
       // Track completed trick
       const trickName = getTrickName(
         player.flipsCompleted,
-        player.halfSpinsCompleted
+        player.halfSpinsCompleted,
+        player.flipDirection
       );
       completedTricks.push({ name: trickName, points: totalBonus });
       showBonus(totalBonus, trickName);
@@ -1108,6 +1119,7 @@ function update(deltaTime) {
     // Reset flip and rotation tracking on landing
     player.flipsCompleted = 0;
     player.halfSpinsCompleted = 0;
+    player.flipDirection = null;
     syncRotationFromState(); // Sync rotation coordinates with current state
   }
   cameraX = player.worldX;
@@ -1190,6 +1202,7 @@ function update(deltaTime) {
           // Reset flip and rotation tracking when taking off
           player.flipsCompleted = 0;
           player.halfSpinsCompleted = 0;
+          player.flipDirection = null;
           player.lastState = player.state; // Preserve current state
           syncRotationFromState(); // Sync rotation coordinates with current state
           o.active = false;
