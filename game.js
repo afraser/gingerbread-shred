@@ -31,6 +31,38 @@ function showBonus(points) {
   }, BONUS_TEXT_DURATION_MS);
 }
 
+/**
+ * Generate trick name from flips and spins
+ * @param {number} flips - Number of complete flips (4 = 1 flip)
+ * @param {number} halfSpins - Number of 180° spins
+ * @returns {string} - Trick name
+ */
+function getTrickName(flips, halfSpins) {
+  const parts = [];
+
+  // Handle flips
+  if (flips > 0) {
+    let flipPrefix = '';
+    if (flips === 2) flipPrefix = 'Double ';
+    else if (flips === 3) flipPrefix = 'Triple ';
+    else if (flips === 4) flipPrefix = 'Quadruple ';
+    else if (flips > 4) flipPrefix = `${flips}x `;
+
+    // Determine if frontflip or backflip based on rotation direction
+    // For now, we'll just use "Flip" - can be enhanced later with direction tracking
+    const flipType = flips === 1 ? 'Flip' : 'Flips';
+    parts.push(flipPrefix + flipType);
+  }
+
+  // Handle spins (180, 360, 540, etc)
+  if (halfSpins > 0) {
+    const degrees = halfSpins * 180;
+    parts.push(`${degrees}°`);
+  }
+
+  return parts.join(' + ') || 'Trick';
+}
+
 // Palette
 const C = {
   white: '#fff1e8',
@@ -275,6 +307,7 @@ let currentTrailId = null; // ID of currently loaded trail (for reloading)
 let trailDistance = 0; // Distance traveled down the trail
 let trailObstaclesSpawned = []; // Track which trail obstacles have been spawned
 let decorativeObstacles = []; // Visual-only obstacles in off-bounds areas
+let completedTricks = []; // Array of {name: string, points: number} for completed tricks
 
 // --- CANVAS SETUP ---
 
@@ -535,10 +568,21 @@ function loadTrailFromData(trailData, trailName) {
 
 // Show trail completion screen
 function showTrailComplete() {
+  let tricksHTML = '';
+  if (completedTricks.length > 0) {
+    tricksHTML = '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
+    tricksHTML += '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
+    completedTricks.forEach(trick => {
+      tricksHTML += `<p style="font-size: 14px;">${trick.name} - ${trick.points.toLocaleString()}</p>`;
+    });
+    tricksHTML += '</div>';
+  }
+
   startScreen.innerHTML = `
     <h1 style="color: #30c873;">APRÈS SKI</h1>
     <p style="font-size: 24px; margin: 20px 0;">${currentTrailId}</p>
-    <p style="font-size: 32px; color: #ff004d;">SCORE: ${Math.floor(score)}</p>
+    <p style="font-size: 32px; color: #ff004d;">SCORE: ${Math.floor(score).toLocaleString()}</p>
+    ${tricksHTML}
     <br>
     <p>Space: Retry Trail</p>
     <p>Esc: Main Menu</p>
@@ -611,6 +655,7 @@ function init() {
   gameSpeed = INITIAL_GAME_SPEED;
   shakeAmt = 0;
   cameraX = 0;
+  completedTricks = []; // Reset tricks for new run
 
   // Reset input state
   keys.left = false;
@@ -1031,6 +1076,13 @@ function update(deltaTime) {
       const totalBonus = flipBonus + rotationBonus;
       score += totalBonus;
       showBonus(totalBonus);
+
+      // Track completed trick
+      const trickName = getTrickName(
+        player.flipsCompleted,
+        player.halfSpinsCompleted
+      );
+      completedTricks.push({ name: trickName, points: totalBonus });
     }
 
     // Check for crash landing (landing in non-upright state)
@@ -1318,9 +1370,21 @@ function crumble() {
 /** Handle Game Over state. */
 function gameOver() {
   gameState = 'GAMEOVER';
+
+  let tricksHTML = '';
+  if (completedTricks.length > 0) {
+    tricksHTML = '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
+    tricksHTML += '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
+    completedTricks.forEach(trick => {
+      tricksHTML += `<p style="font-size: 14px;">${trick.name} - ${trick.points.toLocaleString()}</p>`;
+    });
+    tricksHTML += '</div>';
+  }
+
   startScreen.innerHTML = `
         <h1>CRUMBLED!</h1>
-        <p>Score: ${Math.floor(score)}</p>
+        <p>Score: ${Math.floor(score).toLocaleString()}</p>
+        ${tricksHTML}
         <br>
         <p class="blink">${getRestartText()}</p>
     `;
