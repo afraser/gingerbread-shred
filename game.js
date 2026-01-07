@@ -11,13 +11,19 @@ const gameContainer = document.getElementById('gameContainer');
 /**
  * Show floating bonus text above player
  * @param {number} points - Points to display
+ * @param {string} trickName - Optional trick name to display above points
  */
-function showBonus(points) {
+function showBonus(points, trickName = null) {
   if (!gameContainer) return; // Guard for test environment
 
   const bonusEl = document.createElement('div');
   bonusEl.className = 'bonus-text';
-  bonusEl.textContent = `+${points}`;
+
+  if (trickName) {
+    bonusEl.innerHTML = `${trickName}<br>+${points}`;
+  } else {
+    bonusEl.textContent = `+${points}`;
+  }
 
   // Position above player's head
   bonusEl.style.left = `${player.x}px`;
@@ -1075,7 +1081,6 @@ function update(deltaTime) {
       const rotationBonus = player.halfSpinsCompleted * ROTATION_BONUS_POINTS;
       const totalBonus = flipBonus + rotationBonus;
       score += totalBonus;
-      showBonus(totalBonus);
 
       // Track completed trick
       const trickName = getTrickName(
@@ -1083,6 +1088,7 @@ function update(deltaTime) {
         player.halfSpinsCompleted
       );
       completedTricks.push({ name: trickName, points: totalBonus });
+      showBonus(totalBonus, trickName);
     }
 
     // Check for crash landing (landing in non-upright state)
