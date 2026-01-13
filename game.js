@@ -40,11 +40,11 @@ function showBonus(points, trickName = null) {
 /**
  * Generate trick name from flips and spins
  * @param {number} flips - Number of complete flips (4 = 1 flip)
- * @param {number} halfSpins - Number of 180° spins
+ * @param {number} spinDegrees - Total degrees of horizontal rotation
  * @param {string} flipDirection - 'frontflip' or 'backflip'
  * @returns {string} - Trick name
  */
-function getTrickName(flips, halfSpins, flipDirection = null) {
+function getTrickName(flips, spinDegrees, flipDirection = null) {
   const parts = [];
 
   // Handle flips
@@ -61,10 +61,10 @@ function getTrickName(flips, halfSpins, flipDirection = null) {
     parts.push(flipPrefix + flipType);
   }
 
-  // Handle spins (180, 360, 540, etc)
-  if (halfSpins > 0) {
-    const degrees = halfSpins * 180;
-    parts.push(`${degrees}°`);
+  // Handle spins (use absolute value - direction doesn't matter for naming)
+  const absDegrees = Math.abs(spinDegrees);
+  if (absDegrees > 0) {
+    parts.push(`${absDegrees}°`);
   }
 
   return parts.join(' + ') || 'Trick';
@@ -124,7 +124,7 @@ const JUMP_BOOST_MULTIPLIER = 1.5;
 const JUMP_BOOST_BASE = 5;
 const JUMP_BONUS_MULTIPLIER = 100;
 const FLIP_BONUS_POINTS = 5000;
-const ROTATION_BONUS_POINTS = 2500; // Bonus per 180º of spin on jumps
+const ROTATION_BONUS_POINTS = 2500; // Bonus per 180º of spin on jumps (1250 per 90º)
 
 // Scoring
 const SCORE_MULTIPLIER = 1;
@@ -686,10 +686,10 @@ function init() {
     state: PLAYER_STATE.UPRIGHT, // Current player orientation
     lastState: PLAYER_STATE.UPRIGHT, // Track previous state to detect completed rotations
     flipsCompleted: 0, // Count full rotations while airborne
-    halfSpinsCompleted: 0, // Count horizontal rotations (spins) while airborne
+    spinDegrees: 0, // Total degrees of horizontal rotation (can be positive or negative)
     flipDirection: null, // 'frontflip' or 'backflip' - set on first rotation
     rotationVertical: 0, // 2D rotation: vertical axis (0-3: upright, laid back, inverted, laid forward)
-    rotationHorizontal: 0, // 2D rotation: horizontal axis (0=frontside, 1=backside)
+    rotationHorizontal: 0, // 2D rotation: horizontal axis (0-3 in grid, 90° per step)
     lastRotationHorizontal: 0, // Track previous horizontal rotation to detect spins
     crashed: false,
     crashTimer: 0,
@@ -864,9 +864,18 @@ function update(deltaTime) {
       player.flipsCompleted++;
     }
 
-    // Detect spins (horizontal rotation changes = 180° spin)
+    // Detect spins (horizontal rotation changes)
     if (player.rotationHorizontal !== player.lastRotationHorizontal) {
-      player.halfSpinsCompleted++;
+      // Calculate rotation direction (wrapping around the grid)
+      const gridSize = ROTATION_GRID[player.rotationVertical].length;
+      let delta = player.rotationHorizontal - player.lastRotationHorizontal;
+
+      // Handle wrapping (e.g., going from 3 to 0 is +1, not -3)
+      if (delta > gridSize / 2) delta -= gridSize;
+      if (delta < -gridSize / 2) delta += gridSize;
+
+      // Each step in the grid is 90°
+      player.spinDegrees += delta * 90;
     }
 
     player.lastState = player.state;
@@ -1083,18 +1092,18 @@ function update(deltaTime) {
     // Check for successful flip landing
     if (
       isPerfectlyUpright(player.state) &&
-      (player.flipsCompleted > 0 || player.halfSpinsCompleted > 0)
+      (player.flipsCompleted > 0 || player.spinDegrees !== 0)
     ) {
       // Award bonus: points per flip + points per rotation
       const flipBonus = player.flipsCompleted * FLIP_BONUS_POINTS;
-      const rotationBonus = player.halfSpinsCompleted * ROTATION_BONUS_POINTS;
+      const rotationBonus = Math.abs(player.spinDegrees) / 180 * ROTATION_BONUS_POINTS;
       const totalBonus = flipBonus + rotationBonus;
       score += totalBonus;
 
       // Track completed trick
       const trickName = getTrickName(
         player.flipsCompleted,
-        player.halfSpinsCompleted,
+        player.spinDegrees,
         player.flipDirection
       );
       completedTricks.push({ name: trickName, points: totalBonus });
@@ -1117,7 +1126,7 @@ function update(deltaTime) {
 
     // Reset flip and rotation tracking on landing
     player.flipsCompleted = 0;
-    player.halfSpinsCompleted = 0;
+    player.spinDegrees = 0;
     player.flipDirection = null;
     player.lastRotationHorizontal = player.rotationHorizontal;
     syncRotationFromState(); // Sync rotation coordinates with current state
@@ -1201,7 +1210,7 @@ function update(deltaTime) {
           showBonus(jumpBonus);
           // Reset flip and rotation tracking when taking off
           player.flipsCompleted = 0;
-          player.halfSpinsCompleted = 0;
+          player.spinDegrees = 0;
           player.flipDirection = null;
           player.lastState = player.state; // Preserve current state
           player.lastRotationHorizontal = player.rotationHorizontal;
