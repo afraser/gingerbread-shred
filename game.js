@@ -68,6 +68,25 @@ function getTrickName(flips, spinDegrees, flipDirection = null) {
   return parts.join(' + ') || 'Trick';
 }
 
+/**
+ * Group tricks by name and sum their points
+ * @param {Array} tricks - Array of {name: string, points: number}
+ * @returns {Array} - Array of {name: string, count: number, totalPoints: number}
+ */
+function groupTricks(tricks) {
+  const grouped = {};
+
+  tricks.forEach((trick) => {
+    if (!grouped[trick.name]) {
+      grouped[trick.name] = { name: trick.name, count: 0, totalPoints: 0 };
+    }
+    grouped[trick.name].count++;
+    grouped[trick.name].totalPoints += trick.points;
+  });
+
+  return Object.values(grouped);
+}
+
 // Palette
 const C = {
   white: '#fff1e8',
@@ -579,10 +598,12 @@ function showTrailComplete() {
       '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
     tricksHTML +=
       '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
-    completedTricks.forEach((trick) => {
+    const grouped = groupTricks(completedTricks);
+    grouped.forEach((trick) => {
+      const countSuffix = trick.count > 1 ? ` x${trick.count}` : '';
       tricksHTML += `<p style="font-size: 14px;">${
         trick.name
-      } - ${trick.points.toLocaleString()}</p>`;
+      }${countSuffix} - ${trick.totalPoints.toLocaleString()}</p>`;
     });
     tricksHTML += '</div>';
   }
@@ -1409,10 +1430,12 @@ function gameOver() {
       '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
     tricksHTML +=
       '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
-    completedTricks.forEach((trick) => {
+    const grouped = groupTricks(completedTricks);
+    grouped.forEach((trick) => {
+      const countSuffix = trick.count > 1 ? ` x${trick.count}` : '';
       tricksHTML += `<p style="font-size: 14px;">${
         trick.name
-      } - ${trick.points.toLocaleString()}</p>`;
+      }${countSuffix} - ${trick.totalPoints.toLocaleString()}</p>`;
     });
     tricksHTML += '</div>';
   }
