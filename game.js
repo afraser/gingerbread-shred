@@ -55,9 +55,7 @@ function getTrickName(flips, spinDegrees, flipDirection = null) {
     else if (flips === 4) flipPrefix = 'Quadruple ';
     else if (flips > 4) flipPrefix = `${flips}x `;
 
-    // Use proper flip type based on direction
-    const baseFlipName = flipDirection === 'frontflip' ? 'Frontflip' : 'Backflip';
-    const flipType = flips === 1 ? baseFlipName : baseFlipName + 's';
+    const flipType = flipDirection === 'frontflip' ? 'Frontflip' : 'Backflip';
     parts.push(flipPrefix + flipType);
   }
 
@@ -577,10 +575,14 @@ function loadTrailFromData(trailData, trailName) {
 function showTrailComplete() {
   let tricksHTML = '';
   if (completedTricks.length > 0) {
-    tricksHTML = '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
-    tricksHTML += '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
-    completedTricks.forEach(trick => {
-      tricksHTML += `<p style="font-size: 14px;">${trick.name} - ${trick.points.toLocaleString()}</p>`;
+    tricksHTML =
+      '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
+    tricksHTML +=
+      '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
+    completedTricks.forEach((trick) => {
+      tricksHTML += `<p style="font-size: 14px;">${
+        trick.name
+      } - ${trick.points.toLocaleString()}</p>`;
     });
     tricksHTML += '</div>';
   }
@@ -588,7 +590,9 @@ function showTrailComplete() {
   startScreen.innerHTML = `
     <h1 style="color: #30c873;">APRÈS SKI</h1>
     <p style="font-size: 24px; margin: 20px 0;">${currentTrailId}</p>
-    <p style="font-size: 32px; color: #ff004d;">SCORE: ${Math.floor(score).toLocaleString()}</p>
+    <p style="font-size: 32px; color: #ff004d;">SCORE: ${Math.floor(
+      score
+    ).toLocaleString()}</p>
     ${tricksHTML}
     <br>
     <p>Space: Retry Trail</p>
@@ -623,11 +627,9 @@ function updateStartScreenInstructions() {
   document
     .getElementById('btnLoadTrail')
     .addEventListener('touchstart', showTrailList);
-  document
-    .getElementById('btnTrailMaker')
-    .addEventListener('click', () => {
-      window.location.href = 'trailmaker.html';
-    });
+  document.getElementById('btnTrailMaker').addEventListener('click', () => {
+    window.location.href = 'trailmaker.html';
+  });
   document
     .getElementById('btnTrailMaker')
     .addEventListener('touchstart', () => {
@@ -1096,7 +1098,8 @@ function update(deltaTime) {
     ) {
       // Award bonus: points per flip + points per rotation
       const flipBonus = player.flipsCompleted * FLIP_BONUS_POINTS;
-      const rotationBonus = Math.abs(player.spinDegrees) / 180 * ROTATION_BONUS_POINTS;
+      const rotationBonus =
+        (Math.abs(player.spinDegrees) / 180) * ROTATION_BONUS_POINTS;
       const totalBonus = flipBonus + rotationBonus;
       score += totalBonus;
 
@@ -1402,10 +1405,14 @@ function gameOver() {
 
   let tricksHTML = '';
   if (completedTricks.length > 0) {
-    tricksHTML = '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
-    tricksHTML += '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
-    completedTricks.forEach(trick => {
-      tricksHTML += `<p style="font-size: 14px;">${trick.name} - ${trick.points.toLocaleString()}</p>`;
+    tricksHTML =
+      '<div style="margin: 20px 0; max-height: 200px; overflow-y: auto;">';
+    tricksHTML +=
+      '<p style="color: #29adff; font-size: 18px; margin-bottom: 10px;">TRICKS:</p>';
+    completedTricks.forEach((trick) => {
+      tricksHTML += `<p style="font-size: 14px;">${
+        trick.name
+      } - ${trick.points.toLocaleString()}</p>`;
     });
     tricksHTML += '</div>';
   }
